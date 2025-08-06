@@ -267,15 +267,48 @@
         .transaction-amount.Pending { background-color: #ffab00; color: #000;}
         .transaction-amount.Rejected { background-color: var(--error-color); color: white; }
 
-        #player-list-modal-content p {
+        .team-view-card {
             background-color: var(--input-bg);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            color: var(--primary-text);
-            font-weight: 500;
-            border-left: 3px solid var(--premium-orange);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--premium-orange);
         }
+        .team-view-card h4 {
+            color: var(--primary-text);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .team-view-card .slot-count {
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .team-view-card .gamertag-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 15px;
+        }
+        .team-view-card .gamertag-list li {
+            background: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            color: var(--primary-text);
+        }
+        .team-view-card .btn.join-existing-team-btn {
+            width: 100%;
+            background-color: var(--success-color);
+            margin-top: 10px;
+        }
+        .player-input-group {
+             background: var(--card-bg); 
+             padding: 15px; 
+             border-radius: 8px; 
+             margin-bottom: 15px;
+             border: 1px solid var(--border-color);
+        }
+
     </style>
 </head>
 <body>
@@ -348,7 +381,7 @@
     
 <div class="modal-overlay" id="gamer-tag-modal-overlay"> 
     <div class="modal"> 
-        <div class="modal-header">Enter GamerTags</div> 
+        <div class="modal-header">Enter Your Team Details</div> 
         <div class="modal-body" id="gamer-tag-inputs"></div> 
         <div id="gamer-tag-error" class="message error-message" style="margin-top: 15px;"></div> 
         <div class="modal-actions"> 
@@ -370,10 +403,23 @@
 
 <div class="modal-overlay" id="player-list-modal-overlay">
     <div class="modal">
-        <div class="modal-header">Gamertags</div>
+        <div class="modal-header">Joined Teams</div>
         <div class="modal-body" id="player-list-modal-content"></div>
         <div class="modal-actions">
             <button id="player-list-modal-close-btn" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="join-team-modal-overlay">
+    <div class="modal">
+        <div class="modal-header">Join Existing Team</div>
+        <div class="modal-body" id="join-team-inputs">
+        </div>
+        <div id="join-team-error" class="message error-message"></div>
+        <div class="modal-actions">
+            <button id="cancel-join-team-btn" class="btn cancel">Cancel</button>
+            <button id="confirm-join-team-btn" class="btn btn-success">Confirm & Pay</button>
         </div>
     </div>
 </div>
@@ -448,16 +494,12 @@
             document.getElementById('profile-email').textContent = data.email || 'N/A';
             document.getElementById('profile-balance').textContent = (data.balance || 0).toFixed(2);
             
-            // <<< START: MODIFIED CODE >>>
-            // 1. Check for a locally saved picture first.
             const localPic = localStorage.getItem('profilePic');
             if (localPic) {
                 document.getElementById('profile-pic-img').src = localPic;
             } else {
-                // 2. If not found locally, use the URL from Firebase DB.
                 document.getElementById('profile-pic-img').src = data.profilePicUrl || "https://i.ibb.co/6yT4R45/default-avatar.png";
             }
-            // <<< END: MODIFIED CODE >>>
         });
     }
 
@@ -544,7 +586,7 @@
                              <div class="detail-item"><p>MAP</p><span>${t.map || 'Bermuda'}</span></div>
                         </div>
                         <div class="countdown-container">${!hasStarted && t.startTime ? `<div class="countdown" id="countdown-${key}"></div>` : '<p class="match-started-text">Match Started</p>'}</div>
-                        <div class="player-progress-section view-players-btn" data-id="${key}">
+                        <div class="player-progress-section view-players-btn" data-id="${key}" data-max-players-per-team="${t.playersPerTeam || 1}">
                             <span class="player-count">${joinedPlayerCount} Joined</span>
                             <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercentage}%;"></div></div>
                             <span class="player-count">${Math.max(0, maxPlayers - joinedPlayerCount)} Left</span>
@@ -649,6 +691,7 @@
     // --- MODAL & JOIN LOGIC ---
     function closeDetailsModal() { document.getElementById('details-modal-overlay').classList.remove('active'); }
     function closePlayerListModal() { document.getElementById('player-list-modal-overlay').classList.remove('active'); }
+    function closeJoinTeamModal() { document.getElementById('join-team-modal-overlay').classList.remove('active'); }
 
     async function showTournamentDetailsModal(tournamentId) {
         const modalOverlay = document.getElementById('details-modal-overlay');
@@ -707,25 +750,60 @@
         }
     }
 
-    async function showPlayerListModal(tournamentId) {
+    async function showPlayerListModal(tournamentId, maxPlayersPerTeam) {
         const modalOverlay = document.getElementById('player-list-modal-overlay');
         const modalContentEl = document.getElementById('player-list-modal-content');
-        modalContentEl.innerHTML = '<p>Loading players...</p>';
+        modalContentEl.innerHTML = '<p>Loading teams...</p>';
         modalOverlay.classList.add('active');
         try {
             const playersSnap = await get(ref(db, `tournaments/${tournamentId}/players`));
-            if (!playersSnap.exists() || Object.keys(playersSnap.val()).length === 0) {
-                modalContentEl.innerHTML = '<p>No players have joined yet.</p>';
+            const allTeams = playersSnap.exists() ? playersSnap.val() : {};
+
+            // Check if the current user is already in ANY team for this tournament
+            let isUserAlreadyInTeam = false;
+            if (allTeams[currentUserId]) { // Is the user a team leader?
+                isUserAlreadyInTeam = true;
+            } else { // Is the user an authorized member of another team?
+                for (const team of Object.values(allTeams)) {
+                    if (team.authorizedUsers && team.authorizedUsers.includes(currentUserId)) {
+                        isUserAlreadyInTeam = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (Object.keys(allTeams).length === 0) {
+                modalContentEl.innerHTML = '<p>No teams have joined yet.</p>';
                 return;
             }
+
             modalContentEl.innerHTML = '';
-            Object.values(playersSnap.val()).forEach(player => {
-                const playerEl = document.createElement('p');
-                const tags = Array.isArray(player.gamerTags) ? player.gamerTags.join(' • ') : (player.gamerTag || 'Unknown Gamertag');
-                playerEl.textContent = tags;
-                modalContentEl.appendChild(playerEl);
+            Object.entries(allTeams).forEach(([teamLeaderId, team]) => {
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-view-card';
+
+                const gamertagsHtml = team.gamerTags.map(tag => `<li>${tag}</li>`).join('');
+                const isTeamFull = team.gamerTags.length >= maxPlayersPerTeam;
+                const availableSlots = maxPlayersPerTeam - team.gamerTags.length;
+                
+                let joinButtonHtml = '';
+                // Show join button only if the team is not full AND the current user is not already in a team
+                if (!isTeamFull && !isUserAlreadyInTeam) {
+                     joinButtonHtml = `<button class="btn btn-success join-existing-team-btn"
+                                      data-tournament-id="${tournamentId}"
+                                      data-team-leader-id="${teamLeaderId}"
+                                      data-available-slots="${availableSlots}">Join Team</button>`;
+                }
+
+                teamCard.innerHTML = `
+                    <h4>${team.teamName || 'Unnamed Team'}</h4>
+                    <p class="slot-count">Players: ${team.gamerTags.length}/${maxPlayersPerTeam}</p>
+                    <ul class="gamertag-list">${gamertagsHtml}</ul>
+                    ${joinButtonHtml}
+                `;
+                modalContentEl.appendChild(teamCard);
             });
-        } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load player list.</p>`; }
+        } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load player list. ${error.message}</p>`; }
     }
 
     function showJoinTournamentModal(tournamentId, entryFee, playersPerTeam) {
@@ -734,34 +812,62 @@
         gamerTagInputsContainer.innerHTML = '';
         hideMessage('gamer-tag-error');
 
-        let inputHtml = '';
+        let inputHtml = `
+            <div class="form-field" style="margin-bottom: 20px;">
+                <label for="join-team-name">Team Name:</label>
+                <input type="text" id="join-team-name" placeholder="Enter your team name" required>
+            </div>
+        `;
         for (let i = 0; i < playersPerTeam; i++) {
-            inputHtml += `<div class="player-input-group" style="background: var(--input-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            const placeholderText = i === 0 ? "Enter Your Gamer Tag" : "Enter Gamer Tag or 'add'";
+            inputHtml += `<div class="player-input-group">
                 <div class="form-field" style="margin-bottom: 12px;">
                     <label for="gamer-tag-input-${i}">Gamer Tag (Player ${i + 1}):</label>
-                    <input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="Enter Gamer Tag" required>
+                    <input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="${placeholderText}">
                 </div>
-                ${playersPerTeam > 1 ? `<div class="form-field" style="margin-bottom: 0;">
-                    <label for="username-input-${i}">Enter Username (Optional):</label>
-                    <input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user">
-                </div>` : ''}
+                <div class="form-field" style="margin-bottom: 0;">
+                     <label for="username-input-${i}">Player's Username (Optional):</label>
+                     <input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user">
+                </div>
             </div>`;
         }
         gamerTagInputsContainer.innerHTML = inputHtml;
         modalOverlay.classList.add('active');
 
         document.getElementById('confirm-join-btn').onclick = async () => {
-            const gamerTagInputs = [...document.querySelectorAll('.gamer-tag-input-field')].map(i => i.value.trim());
-            if (gamerTagInputs.some(tag => !tag)) {
-                return showMessage('gamer-tag-error', 'All Gamer Tag fields must be filled.');
-            }
+            const teamName = document.getElementById('join-team-name').value.trim();
+            if (!teamName) return showMessage('gamer-tag-error', 'Team Name is required.');
 
-            const totalFee = entryFee * playersPerTeam;
-            const collectedUsernames = [...document.querySelectorAll('.username-input-field')].map(i => i.value.trim().toLowerCase()).filter(Boolean);
+            const addKeyword = 'add';
+            const gamerTagInputs = [...document.querySelectorAll('.gamer-tag-input-field')];
+            const usernameInputs = [...document.querySelectorAll('.username-input-field')];
             
-            let authorizedUserIds = [currentUserId];
+            let finalGamerTags = [];
+            let collectedUsernames = [];
+
+            // Process inputs together
+            for (let i = 0; i < gamerTagInputs.length; i++) {
+                const tag = gamerTagInputs[i].value.trim();
+                const username = usernameInputs[i].value.trim();
+                
+                if(i === 0) { // Player 1 validation
+                    if (!tag) return showMessage('gamer-tag-error', 'Your Gamer Tag (Player 1) is required.');
+                    if (tag.toLowerCase() === addKeyword) return showMessage('gamer-tag-error', "Player 1's Gamer Tag cannot be 'add'.");
+                }
+
+                if (tag && tag.toLowerCase() !== addKeyword) {
+                    finalGamerTags.push(tag);
+                    if (username) collectedUsernames.push(username.toLowerCase());
+                }
+            }
+            
+            if (finalGamerTags.length === 0) return showMessage('gamer-tag-error', 'Please enter at least one valid Gamer Tag.');
+
+            const totalFee = entryFee * finalGamerTags.length;
+            let authorizedUserIds = [currentUserId]; // Team creator always has access
+
             if (collectedUsernames.length > 0) {
-                try {
+                 try {
                     const allUsersSnap = await get(ref(db, 'users'));
                     if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
                     const usernameToUidMap = {};
@@ -770,8 +876,11 @@
                     });
                     for (const username of collectedUsernames) {
                         const foundUid = usernameToUidMap[username];
-                        if (foundUid && !authorizedUserIds.includes(foundUid)) authorizedUserIds.push(foundUid);
-                        else if (!foundUid) throw new Error(`User "${username}" not found.`);
+                        if (foundUid && !authorizedUserIds.includes(foundUid)) {
+                             authorizedUserIds.push(foundUid);
+                        } else if (!foundUid) {
+                            throw new Error(`User "${username}" not found.`);
+                        }
                     }
                 } catch(error) { return showMessage('gamer-tag-error', error.message); }
             }
@@ -783,19 +892,118 @@
                 });
                 
                 await set(ref(db, `tournaments/${tournamentId}/players/${currentUserId}`), {
-                    gamerTags: gamerTagInputs,
+                    teamName,
+                    gamerTags: finalGamerTags,
                     joinedAt: Date.now(),
-                    authorizedUsers: authorizedUserIds
+                    authorizedUsers: authorizedUserIds 
                 });
 
-                showFlashMessage('tournament-success', 'Successfully joined!');
+                showFlashMessage('tournament-success', 'Successfully created team and joined!');
                 modalOverlay.classList.remove('active');
             } catch (error) {
-                showMessage('gamer-tag-error', error.message.includes("Insufficient balance") ? 'Insufficient balance.' : 'Failed to join. Try again.');
+                showMessage('gamer-tag-error', error.message.includes("Insufficient balance") ? `Insufficient balance. Required: ${totalFee} BDT` : 'Failed to join. Try again.');
             }
         };
+
         document.getElementById('cancel-join-btn').onclick = () => modalOverlay.classList.remove('active');
     }
+
+    function showJoinExistingTeamModal(tournamentId, teamLeaderId, availableSlots) {
+        const modal = document.getElementById('join-team-modal-overlay');
+        const inputsContainer = document.getElementById('join-team-inputs');
+        inputsContainer.innerHTML = '';
+        hideMessage('join-team-error');
+
+        let inputHtml = '';
+        for (let i = 0; i < availableSlots; i++) {
+            inputHtml += `<div class="player-input-group">
+                            <div class="form-field" style="margin-bottom: 12px;">
+                               <label for="join-new-gamertag-${i}">New Teammate's Gamer Tag (${i + 1}):</label>
+                               <input type="text" id="join-new-gamertag-${i}" class="join-new-gamertag-field" placeholder="Enter Gamer Tag or 'add'">
+                            </div>
+                            <div class="form-field" style="margin-bottom: 0;">
+                               <label for="join-new-username-${i}">Player's Username (Optional):</label>
+                               <input type="text" id="join-new-username-${i}" class="join-new-username-field" placeholder="Share room access with user">
+                            </div>
+                          </div>`;
+        }
+        inputsContainer.innerHTML = inputHtml;
+        modal.classList.add('active');
+
+        document.getElementById('confirm-join-team-btn').onclick = async () => {
+            const addKeyword = 'add';
+            const gamertagInputs = [...document.querySelectorAll('.join-new-gamertag-field')];
+            const usernameInputs = [...document.querySelectorAll('.join-new-username-field')];
+
+            let validNewGamerTags = [];
+            let collectedUsernames = [];
+
+            for (let i=0; i < gamertagInputs.length; i++) {
+                const tag = gamertagInputs[i].value.trim();
+                const username = usernameInputs[i].value.trim();
+                if (tag && tag.toLowerCase() !== addKeyword) {
+                    validNewGamerTags.push(tag);
+                    if (username) collectedUsernames.push(username.toLowerCase());
+                }
+            }
+
+            if (validNewGamerTags.length === 0) {
+                return showMessage('join-team-error', "Please enter at least one valid Gamer Tag.");
+            }
+
+            try {
+                const tournamentSnap = await get(ref(db, `tournaments/${tournamentId}`));
+                if (!tournamentSnap.exists()) throw new Error("Tournament not found.");
+                
+                const entryFee = tournamentSnap.val().entryFee || 0;
+                const totalFee = entryFee * validNewGamerTags.length;
+
+                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
+                    if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee;
+                    else throw new Error(`Insufficient balance. Required: ${totalFee} BDT`);
+                });
+                
+                let newAuthorizedUserIds = [];
+                if (collectedUsernames.length > 0) {
+                    const allUsersSnap = await get(ref(db, 'users'));
+                    if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
+                    const usernameToUidMap = {};
+                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => {
+                        if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid;
+                    });
+                    for (const username of collectedUsernames) {
+                        const foundUid = usernameToUidMap[username];
+                        if (foundUid) newAuthorizedUserIds.push(foundUid);
+                        else throw new Error(`User "${username}" not found.`);
+                    }
+                }
+
+                const teamRef = ref(db, `tournaments/${tournamentId}/players/${teamLeaderId}`);
+                const teamSnap = await get(teamRef);
+                if (!teamSnap.exists()) throw new Error("Team could not be found.");
+                
+                const teamData = teamSnap.val();
+                const updatedTags = [...teamData.gamerTags, ...validNewGamerTags];
+                const updatedAuthUsers = [...new Set([...teamData.authorizedUsers, ...newAuthorizedUserIds])]; // Combine and remove duplicates
+
+                await update(teamRef, { 
+                    gamerTags: updatedTags,
+                    authorizedUsers: updatedAuthUsers
+                });
+
+                showFlashMessage('tournament-success', 'Successfully joined the team!');
+                modal.classList.remove('active');
+                closePlayerListModal(); 
+                const maxPlayers = tournamentSnap.val().playersPerTeam || 1;
+                showPlayerListModal(tournamentId, maxPlayers);
+
+            } catch (error) {
+                // If transaction fails, we should ideally refund the user, but for now just show error.
+                showMessage('join-team-error', error.message);
+            }
+        };
+    }
+
 
     // --- FINANCE TRANSACTION HANDLERS ---
     async function handleAddMoney() { /* Unchanged */ }
@@ -838,7 +1046,6 @@
             });
         });
         
-        // <<< START: MODIFIED CODE >>>
         document.getElementById('profile-pic-upload').addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -847,17 +1054,13 @@
 
             reader.onload = function(e) {
                 const imageDataUrl = e.target.result;
-                // Save the image data URL to local storage
                 localStorage.setItem('profilePic', imageDataUrl);
-                // Immediately display the new image
                 document.getElementById('profile-pic-img').src = imageDataUrl;
-                // Show a success message
                 showFlashMessage('profile-info-success', 'Profile picture updated locally!');
             };
 
-            reader.readAsDataURL(file); // Read the file as a a Data URL (base64)
+            reader.readAsDataURL(file);
         });
-        // <<< END: MODIFIED CODE >>>
 
         document.querySelector('.tournament-nav').addEventListener('click', (e) => {
             if (e.target.classList.contains('nav-tab')) {
@@ -880,19 +1083,31 @@
             } else if (joinBtn) {
                 const { id, fee, playersPerTeam } = joinBtn.dataset;
                 showJoinTournamentModal(id, parseFloat(fee), parseInt(playersPerTeam));
-            } else if (cardHeader || roomIdBtn) { // Clicking the entire header or room id button
+            } else if (cardHeader || roomIdBtn) {
                 const tournamentId = (cardHeader || roomIdBtn).dataset.id;
                 showTournamentDetailsModal(tournamentId);
             } else if (viewPlayersBtn) {
                 const tournamentId = viewPlayersBtn.dataset.id;
-                showPlayerListModal(tournamentId);
+                const maxPlayers = viewPlayersBtn.dataset.maxPlayersPerTeam;
+                showPlayerListModal(tournamentId, parseInt(maxPlayers));
             }
         });
         
+        document.getElementById('player-list-modal-overlay').addEventListener('click', e => {
+            if (e.target.classList.contains('join-existing-team-btn')) {
+                const { tournamentId, teamLeaderId, availableSlots } = e.target.dataset;
+                showJoinExistingTeamModal(tournamentId, teamLeaderId, parseInt(availableSlots));
+            }
+        });
+
         document.getElementById('details-modal-close-btn').addEventListener('click', closeDetailsModal);
         document.getElementById('details-modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'details-modal-overlay') closeDetailsModal(); });
+        
         document.getElementById('player-list-modal-close-btn').addEventListener('click', closePlayerListModal);
         document.getElementById('player-list-modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'player-list-modal-overlay') closePlayerListModal(); });
+
+        document.getElementById('cancel-join-team-btn').addEventListener('click', closeJoinTeamModal);
+        document.getElementById('join-team-modal-overlay').addEventListener('click', (e) => { if(e.target.id === 'join-team-modal-overlay') closeJoinTeamModal(); });
 
         onAuthStateChanged(auth, user => {
             if (user) {
@@ -901,8 +1116,6 @@
                 document.getElementById('app-section').classList.add('active');
                 document.getElementById('logout-btn').onclick = () => {
                     signOut(auth).then(() => {
-                        // Optional: Clear the local storage picture on logout
-                        // localStorage.removeItem('profilePic'); 
                         location.reload();
                     });
                 };

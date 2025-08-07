@@ -12,14 +12,15 @@
             --input-bg: #1a1a2e;
             --primary-text: #ffffff;
             --secondary-text: #e0e0e0;
-            --accent-color: #e94560; /* Main action color (pink/red) */
-            --success-color: #00c853; /* Green */
-            --info-color: #0f3460;   /* Blue */
-            --transfer-color: #5f27cd; /* Purple */
+            --accent-color: #e94560;
+            --success-color: #00c853;
+            --info-color: #0f3460;
+            --transfer-color: #5f27cd;
             --error-color: #ff3d00;
             --border-color: #0f3460;
             --prize-list-bg: #101c32;
-            --premium-orange: #e67e22; /* New premium orange color */
+            --premium-orange: #e67e22;
+            --yellow-accent: #f1c40f;
             --ripple-color: rgba(255, 255, 255, 0.3);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -44,6 +45,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
         #auth-section, #app-section {
             width: 100%;
@@ -69,171 +71,285 @@
         .scrollable-content::-webkit-scrollbar { display: none; }
         .app-title { font-size: 2.2rem; font-weight: 700; margin-bottom: 30px; text-align: center; color: var(--primary-text); }
         .page-title { font-size: 2rem; font-weight: 700; margin: 20px 0; text-align: center; color: var(--accent-color); }
-        .section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
-        .section.active { display: block; opacity: 1; }
-        .content-card { background: var(--card-bg); border-radius: 15px; padding: 25px; margin-bottom: 20px; }
-        .profile-pic-container { position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto; border-radius: 50%; border: 3px solid var(--info-color); }
-        #profile-pic-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background-color: var(--input-bg); }
-        #profile-pic-upload-label { position: absolute; bottom: 0; right: 0; background-color: var(--accent-color); color: var(--bg-color); width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 2px solid var(--card-bg); }
-        #profile-pic-upload { display: none; }
-        .profile-info p { text-align: left; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; }
-        .profile-info strong { color: var(--primary-text); display: inline-block; width: 110px; flex-shrink: 0; }
-        
-        #upload-progress-container {
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            height: 6px;
-            background-color: var(--input-bg);
-            border-radius: 3px;
+
+        /* --- Page & Modal Animations --- */
+        .section {
             display: none;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
-        #upload-progress-bar {
-            width: 0%;
-            height: 100%;
-            background-color: var(--success-color);
-            border-radius: 3px;
-            transition: width 0.4s ease;
+        .section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
-        
-        /* --- MODIFIED Category Selection Styles --- */
-        #tournament-category-selection {
-            padding-top: 20px;
-        }
-        .category-selection-card {
-            height: 150px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
             display: flex;
-            align-items: center; /* Changed */
-            padding: 20px;
-            cursor: pointer;
-            background-size: cover;
-            background-position: center;
-            transition: transform 0.3s ease;
-            gap: 20px; /* Added */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-        .category-selection-card:active {
-            transform: scale(0.97);
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
-        .category-selection-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.1));
+        .modal {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
             border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 380px;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
         }
-        .category-selection-card .content {
-            position: relative;
-            z-index: 2;
+        .modal-overlay.active .modal {
+            transform: scale(1);
         }
-        .category-selection-card h3 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary-text);
-            margin: 0;
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+
+        .content-card { background: var(--card-bg); border-radius: 15px; padding: 25px; margin-bottom: 20px; }
+
+        /* --- NEW HEADER --- */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
-        .category-selection-card p {
-            font-size: 1rem;
-            color: var(--secondary-text);
-            margin: 5px 0 0;
-            font-weight: 500;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        .app-logo img {
+            height: 40px;
         }
-        /* New Icon Style */
-        .category-icon {
-            position: relative;
-            z-index: 2;
-            width: 60px; 
-            height: 60px;
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .wallet-balance {
+            display: flex;
+            align-items: center;
+            background-color: var(--premium-orange);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        .wallet-balance svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            fill: #fff;
+        }
+        .profile-menu-btn {
+            background: none;
+            border: 2px solid var(--secondary-text);
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.8);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--secondary-text);
+        }
+        .profile-menu-btn svg {
+             width: 24px;
+             height: 24px;
+             fill: currentColor;
+        }
+
+        /* --- NEW SIDE MENU --- */
+        #side-menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #side-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        #side-menu {
+            position: absolute;
+            top: 0;
+            right: -280px; /* Start off-screen */
+            width: 280px;
+            height: 100%;
+            background-color: var(--card-bg);
+            z-index: 2000;
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        #side-menu.active {
+            right: 0;
+        }
+        .side-menu-header { padding: 20px; background-color: var(--info-color); text-align: center; position: relative; }
+        .side-menu-header .close-menu-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .side-menu-header .settings-btn {
+            position: absolute; top: 10px; right: 45px;
+            background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;
+            width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;
+        }
+        .side-menu-header .settings-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .side-menu-header .user-icon { width: 50px; height: 50px; border-radius: 50%; background: var(--secondary-text); color: var(--info-color); display: flex; justify-content: center; align-items: center; margin: 0 auto 10px; }
+        .side-menu-header .user-icon svg { width: 30px; height: 30px; fill: currentColor; }
+        .side-menu-header h3 { font-size: 1.1rem; margin: 0; }
+        .side-menu-header p { font-size: 0.8rem; color: var(--secondary-text); margin: 0;}
+        .side-menu-nav { flex-grow: 1; overflow-y: auto; padding: 15px 0; }
+        .side-menu-nav a { display: flex; align-items: center; gap: 15px; padding: 12px 20px; color: var(--secondary-text); text-decoration: none; font-size: 1rem; font-weight: 500; }
+        .side-menu-nav a:hover, .side-menu-nav a.active { background-color: rgba(233, 69, 96, 0.1); color: var(--accent-color); border-right: 3px solid var(--accent-color); }
+        .side-menu-nav a svg { width: 22px; height: 22px; fill: currentColor; }
+
+
+        /* --- UPDATED "MY ACCOUNT" STYLES --- */
+        #profile-section {
+            background: var(--bg-color); /* Page background */
+            padding-top: 30px;
+        }
+        #profile-section .page-title { display: none; }
+        .profile-v2-container { text-align: center; }
+        .profile-v2-pic-wrapper {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 15px auto;
+        }
+        #profile-v2-pic {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            border-radius: 50%; /* Circular shape */
+            border: 3px solid var(--info-color);
         }
-        #back-to-categories-btn {
-            display: none; /* Hidden by default */
-            margin: 0 auto 20px;
-            width: 200px;
-            background-color: var(--info-color);
+        #profile-pic-upload-label {
+            position: absolute;
+            bottom: 5px; right: 5px;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            border: 2px solid var(--card-bg);
         }
-        /* --- END MODIFIED Styles --- */
+        #profile-pic-upload { display: none; }
+
+        .profile-v2-username-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .profile-v2-username {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-text);
+        }
+        .verified-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: rgba(241, 196, 15, 0.1);
+            border: 1px solid var(--yellow-accent);
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--yellow-accent);
+        }
+        .verified-badge img { height: 16px; }
+
+        .profile-v2-details-card, .profile-v2-stats-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 0 15px 20px 15px;
+            text-align: left;
+        }
+        .profile-v2-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .profile-v2-detail-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .profile-v2-detail-item .label { color: var(--secondary-text); }
+        .profile-v2-detail-item .value { color: var(--primary-text); font-weight: 500; }
+        .profile-v2-detail-item .value.active { color: var(--success-color); font-weight: 600; }
+         .profile-v2-stats-card {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .profile-v2-stat .label { font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 5px; }
+        .profile-v2-stat .value { font-size: 1.5rem; font-weight: 600; color: var(--yellow-accent); }
+        #profile-v2-logout-btn { display: block; width: calc(100% - 30px); margin: 20px auto; background-color: var(--yellow-accent); color: var(--bg-color); font-size: 1.1rem; }
+        
+        /* --- SUPPORT PAGE --- */
+        .support-card { background-color: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 25px; }
+        .support-card h3 { font-size: 1.5rem; margin-bottom: 20px; text-align: center; color: var(--primary-text); }
+        .follow-us-item, .contact-us-item { display: flex; align-items: center; background-color: var(--input-bg); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-decoration: none; color: var(--secondary-text); transition: background-color 0.3s; }
+        .follow-us-item:hover { background-color: var(--info-color); }
+        .follow-us-item svg { width: 28px; height: 28px; margin-right: 15px; }
+        .follow-us-item .telegram { fill: #2AABEE; }
+        .follow-us-item .youtube { fill: #FF0000; }
+        .follow-us-item .facebook { fill: #1877F2; }
+        .contact-us-item p { margin: 0; display: flex; flex-direction: column; }
+        .contact-us-item strong { color: var(--primary-text); font-size: 1rem; }
+
+        /* --- Category Selection Styles --- */
+        #tournament-category-selection { padding-top: 20px; }
+        .category-selection-card { height: 150px; border-radius: 15px; margin-bottom: 20px; position: relative; overflow: hidden; display: flex; align-items: center; padding: 20px; cursor: pointer; background-size: cover; background-position: center; transition: transform 0.3s ease; gap: 20px; }
+        .category-selection-card:active { transform: scale(0.97); }
+        .category-selection-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.1)); border-radius: 15px; }
+        .category-selection-card .content { position: relative; z-index: 2; }
+        .category-selection-card h3 { font-size: 1.8rem; font-weight: 700; color: var(--primary-text); margin: 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.7); }
+        .category-selection-card p { font-size: 1rem; color: var(--secondary-text); margin: 5px 0 0; font-weight: 500; text-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
+        .category-icon { position: relative; z-index: 2; width: 60px; height: 60px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); object-fit: cover; }
+        #back-to-categories-btn { display: none; margin: 0 auto 20px; width: 200px; background-color: var(--info-color); }
         
         .tournament-category { display: none; }
         .tournament-category.active { display: block; }
-        .new-tournament-card {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            border: 1px solid var(--premium-orange);
-            transition: transform 0.2s ease-in-out;
-        }
-        .card-header {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background-color: rgba(0,0,0,0.2);
-            cursor: pointer;
-        }
+        .new-tournament-card { background-color: var(--card-bg); border-radius: 15px; margin-bottom: 20px; overflow: hidden; border: 1px solid var(--premium-orange); transition: transform 0.2s ease-in-out; }
+        .card-header { display: flex; align-items: center; padding: 15px; background-color: rgba(0,0,0,0.2); cursor: pointer; }
         .card-header img { width: 45px; height: 45px; border-radius: 8px; margin-right: 15px; }
         .card-header-title { flex-grow: 1; }
         .card-header-title h3 { font-size: 1.2rem; margin: 0; color: var(--primary-text); }
         .card-header-title p { font-size: 0.85rem; color: var(--secondary-text); margin: 0; }
         .card-body { padding: 15px; }
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+        .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-bottom: 15px; }
         .detail-item p { margin: 0; font-size: 0.8rem; color: var(--secondary-text); }
         .detail-item span { font-size: 1.1rem; font-weight: 600; color: var(--primary-text); }
-        .sub-details-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 15px; text-align: center; margin-bottom: 20px; padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
-        .player-progress-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            cursor: pointer;
-        }
-        .progress-bar-container {
-            flex-grow: 1; height: 10px; background-color: var(--input-bg);
-            border-radius: 10px; overflow: hidden;
-        }
-        .progress-bar-fill {
-            height: 100%; background-color: var(--accent-color);
-            border-radius: 10px;
-        }
+        .sub-details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-bottom: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .player-progress-section { display: flex; align-items: center; gap: 10px; margin: 15px 0; cursor: pointer; }
+        .progress-bar-container { flex-grow: 1; height: 10px; background-color: var(--input-bg); border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: var(--accent-color); border-radius: 10px; }
         .player-count { font-size: 0.9rem; color: var(--secondary-text); white-space: nowrap;}
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px 15px;
-            gap: 10px;
-        }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px; gap: 10px; }
         .countdown { font-size: 0.9rem; font-weight: 500; text-align: center; color: var(--secondary-text); margin-bottom: 15px; }
         .match-started-text { color: var(--success-color); font-weight: 600; text-align: center; margin-bottom: 15px;}
-        .prize-list-details {
-            display: none;
-            background-color: var(--prize-list-bg);
-            padding: 15px;
-            margin: 0 15px 15px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-        }
+        .prize-list-details { display: none; background-color: var(--prize-list-bg); padding: 15px; margin: 0 15px 15px; border-radius: 8px; white-space: pre-wrap; }
         .prize-list-details p { margin: 5px 0; color: var(--secondary-text); }
         .prize-list-details strong { color: var(--primary-text); }
         
@@ -255,52 +371,17 @@
         .btn.btn-info { background-color: var(--info-color); flex-grow: 1;}
         .btn.btn-special { background-color: var(--transfer-color); width: 100%;}
         
-        .bottom-nav { flex-shrink: 0; border-top: 1px solid var(--border-color); background: var(--card-bg); border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; padding: 5px 0; }
-        .bottom-nav-inner { display: flex; justify-content: space-around; }
-        .bottom-nav button { background: none; border: none; color: var(--secondary-text); padding: 10px 20px; font-size: 0.8rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: color 0.3s ease, transform 0.1s ease; flex-grow: 1; }
-        .bottom-nav button:active { transform: scale(0.95); }
-        .bottom-nav button svg { width: 24px; height: 24px; fill: currentColor; }
-        .bottom-nav button.active { color: var(--accent-color); }
-        
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); 
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
-            z-index: 1000; 
-            display: none; 
-            justify-content: center; 
-            align-items: flex-start;
-            padding-top: 5vh;
-            overflow-y: auto;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal { 
-            background: var(--bg-color); 
-            border: 1px solid var(--border-color); 
-            border-radius: 15px; 
-            padding: 25px; 
-            width: 90%; 
-            max-width: 380px;
-            margin-bottom: 5vh;
-        }
-        .modal .modal-body {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
+        .modal .modal-body { max-height: 60vh; overflow-y: auto; }
         .modal-header { text-align: center; color: var(--accent-color); font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions .cancel { background-color: #6c757d; }
-        
         .details-modal-section { margin-bottom: 20px; }
         .details-modal-section h4 { color: var(--accent-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
         .details-modal-section p { margin-bottom: 8px; color: var(--secondary-text); }
         .details-modal-section strong { color: var(--primary-text); }
-
         .message { padding: 12px 15px; margin-bottom: 15px; border-radius: 8px; text-align: center; display: none; font-weight: 500; }
         .message.success-message { background-color: var(--success-color); color: white; }
         .message.error-message { background-color: var(--error-color); color: white; }
-
         .transaction-item { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; }
         .transaction-info p { margin: 0; }
         .transaction-info .type { font-weight: 600; font-size: 1rem; }
@@ -310,67 +391,16 @@
         .transaction-amount.Debit { background-color: var(--error-color); color: #fff; }
         .transaction-amount.Pending { background-color: #ffab00; color: #000;}
         .transaction-amount.Rejected { background-color: var(--error-color); color: white; }
-
-        .team-view-card {
-            background-color: var(--input-bg);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--premium-orange);
-        }
-        .team-view-card h4 {
-            color: var(--primary-text);
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-        }
-        .team-view-card .slot-count {
-            color: var(--secondary-text);
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-        }
-        .team-view-card .gamertag-list {
-            list-style: none;
-            padding-left: 0;
-            margin-bottom: 15px;
-        }
-        .team-view-card .gamertag-list li {
-            background: var(--bg-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            color: var(--primary-text);
-        }
-        .team-view-card .btn.join-existing-team-btn {
-            width: 100%;
-            background-color: var(--success-color);
-            margin-top: 10px;
-        }
-        .player-input-group {
-             background: var(--card-bg); 
-             padding: 15px; 
-             border-radius: 8px; 
-             margin-bottom: 15px;
-             border: 1px solid var(--border-color);
-        }
-        
-        .ripple-effect {
-            position: relative;
-            overflow: hidden;
-        }
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background-color: var(--ripple-color);
-            transform: scale(0);
-            animation: ripple-animation 0.6s linear;
-            pointer-events: none;
-        }
-        @keyframes ripple-animation {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
+        .team-view-card { background-color: var(--input-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--premium-orange); }
+        .team-view-card h4 { color: var(--primary-text); font-size: 1.2rem; margin-bottom: 10px; }
+        .team-view-card .slot-count { color: var(--secondary-text); font-size: 0.9rem; margin-bottom: 12px; }
+        .team-view-card .gamertag-list { list-style: none; padding-left: 0; margin-bottom: 15px; }
+        .team-view-card .gamertag-list li { background: var(--bg-color); padding: 8px 12px; border-radius: 6px; margin-bottom: 5px; color: var(--primary-text); }
+        .team-view-card .btn.join-existing-team-btn { width: 100%; background-color: var(--success-color); margin-top: 10px; }
+        .player-input-group { background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+        .ripple-effect { position: relative; overflow: hidden; }
+        .ripple { position: absolute; border-radius: 50%; background-color: var(--ripple-color); transform: scale(0); animation: ripple-animation 0.6s linear; pointer-events: none; }
+        @keyframes ripple-animation { to { transform: scale(4); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -380,69 +410,194 @@
         <h1 class="app-title" id="auth-title">FFARENA LOGIN</h1>
         <div class="form-switch"> <button id="show-login-btn" class="active ripple-effect">Login</button> <button id="show-register-btn" class="ripple-effect">Register</button> </div>
         <div id="login-form" class="form-container active"> <form onsubmit="return false;"> <div class="form-field"> <input type="email" id="login-email" placeholder="Email" required> </div> <div class="form-field"> <input type="password" id="login-password" placeholder="Password" required> </div> <button id="login-btn" class="btn btn-primary ripple-effect">Login</button> </form> </div>
-        <div id="register-form" class="form-container"> <form onsubmit="return false;"> <div class="form-field"> <input type="text" id="register-username" placeholder="Username" required> </div> <div class="form-field"> <input type="email" id="register-email" placeholder="Email" required> </div> <div class="form-field"> <input type="password" id="register-password" placeholder="Password" required> </div> <div class="form-field"> <input type="password" id="register-confirm-password" placeholder="Confirm Password" required> </div> <button id="register-btn" class="btn btn-primary ripple-effect">Register</button> </form> </div>
+        <div id="register-form" class="form-container">
+             <form onsubmit="return false;">
+                <div class="form-field"> <input type="text" id="register-username" placeholder="Username" required> </div>
+                <div class="form-field"> <input type="email" id="register-email" placeholder="Email" required> </div>
+                <div class="form-field"> <input type="tel" id="register-phone" placeholder="Phone Number" required> </div>
+                <div class="form-field"> <input type="password" id="register-password" placeholder="Password" required> </div>
+                <div class="form-field"> <input type="number" id="register-pin" placeholder="4-Digit Support PIN" maxlength="4" required> </div>
+                <button id="register-btn" class="btn btn-primary ripple-effect">Register</button>
+             </form>
+        </div>
         <div id="auth-error" class="message error-message"></div>
     </div>
 
     <div id="app-section">
+         <div class="app-header">
+             <a class="app-logo" href="#" id="home-logo-link"><img src="https://i.ibb.co/pvYBPyvf/file-0000000053bc61f7a639378a5d28fa24.png" alt="FFARENA Logo"></a>
+             <div class="header-actions">
+                 <div class="wallet-balance">
+                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                     <span id="header-balance">0.00</span> BDT
+                 </div>
+                 <button class="profile-menu-btn ripple-effect" id="profile-menu-btn">
+                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                 </button>
+             </div>
+         </div>
          <div class="scrollable-content">
+            <!-- Redesigned Profile Section (My Account) -->
             <div id="profile-section" class="section">
-                <h2 class="page-title">FFARENA PROFILE</h2>
-                <div class="content-card">
-                    <div class="profile-pic-container">
-                        <img id="profile-pic-img" src="https://i.ibb.co/6yT4R45/default-avatar.png" alt="Profile Picture">
-                        <label for="profile-pic-upload" id="profile-pic-upload-label" class="ripple-effect"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg></label>
-                        <input type="file" id="profile-pic-upload" accept="image/*">
-                        <div id="upload-progress-container"><div id="upload-progress-bar"></div></div>
+                <div class="profile-v2-container">
+                    <div class="profile-v2-pic-wrapper">
+                         <img id="profile-v2-pic" src="https://i.ibb.co/6yT4R45/default-avatar.png" alt="Profile">
+                         <label for="profile-pic-upload" id="profile-pic-upload-label" class="ripple-effect"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg></label>
+                         <input type="file" id="profile-pic-upload" accept="image/*">
+                    </div>
+                    <div class="profile-v2-username-wrapper">
+                        <h2 id="profile-v2-username" class="profile-v2-username">automation</h2>
+                        <div class="verified-badge">
+                           <img src="https://i.ibb.co/5dcDCkV/1000049476-removebg-preview.png" alt="V"> Verified
+                        </div>
                     </div>
                     <div id="profile-info-success" class="message success-message"></div>
-                    <div class="profile-info"> <p><strong>Username: </strong> <span id="profile-username"></span></p> <p><strong>Email: </strong> <span id="profile-email"></span></p> <p><strong>Balance: </strong> <span id="profile-balance"></span> BDT</p> </div>
-                    <button id="logout-btn" class="btn btn-danger ripple-effect">Logout</button>
+                    <div class="profile-v2-details-card">
+                        <div class="profile-v2-detail-item">
+                            <span class="label">Balance</span>
+                            <span id="profile-v2-balance" class="value">0.00 BDT</span>
+                        </div>
+                        <div class="profile-v2-detail-item">
+                            <span class="label">Status</span>
+                            <span class="value active">Active</span>
+                        </div>
+                        <div class="profile-v2-detail-item">
+                            <span class="label">Email</span>
+                            <span id="profile-v2-email" class="value">automation1900@gmail.com</span>
+                        </div>
+                         <div class="profile-v2-detail-item">
+                            <span class="label">Phone</span>
+                            <span id="profile-v2-phone" class="value">Not Set</span>
+                        </div>
+                    </div>
+                     <div class="profile-v2-stats-card">
+                        <div class="profile-v2-stat">
+                            <span class="label">Support PIN</span>
+                             <span id="profile-v2-pin" class="value">1550</span>
+                        </div>
+                        <div class="profile-v2-stat">
+                            <span class="label">Total Matches</span>
+                             <span id="profile-v2-matches" class="value">0</span>
+                        </div>
+                    </div>
+                    <button id="profile-v2-logout-btn" class="btn ripple-effect">Logout</button>
                 </div>
             </div>
+
             <div id="tournament-section" class="section">
                  <h2 class="page-title">FFARENA TOURNAMENTS</h2>
                  <div id="tournament-success" class="message success-message"></div>
-                 
-                 <!-- MODIFIED: This container will be filled dynamically by JS -->
                  <div id="tournament-category-selection">
-                     <!-- Loading or placeholder content can go here -->
                      <p style="text-align: center; padding: 20px 0;">Loading Tournament Categories...</p>
                  </div>
-
                  <button id="back-to-categories-btn" class="btn ripple-effect">Back to Categories</button>
-
-                 <!-- Tournament lists (now hidden by default) -->
                  <div id="classic-tournaments" class="tournament-category"></div>
                  <div id="clash-squad-tournaments" class="tournament-category"></div>
                  <div id="lone-wolf-tournaments" class="tournament-category"></div>
             </div>
-            <div id="finance-section" class="section">
-                 <h2 class="page-title">FFARENA FINANCE</h2>
-                 <div id="finance-success" class="message success-message"></div>
-                 <div id="finance-error" class="message error-message"></div>
+
+            <!-- Separate Finance Sections -->
+            <div id="add-money-section" class="section">
+                <h2 class="page-title">Add Money</h2>
+                <div id="add-money-success" class="message success-message"></div>
+                <div id="add-money-error" class="message error-message"></div>
+                <div class="content-card">
+                   <p class="info-text" style="background:var(--input-bg); border-radius:8px; padding:15px; text-align:center; margin-bottom: 20px;">Send money to <strong>01852093429 (Bkash)</strong>. Then submit details.</p>
+                   <form onsubmit="return false;" id="add-money-form"> <div class="form-field"><input type="text" id="transaction-id" placeholder="Transaction ID" required></div> <div class="form-field"><input type="number" id="add-amount" placeholder="Amount (BDT)" required></div> <button id="add-money-btn" class="btn btn-primary ripple-effect">Submit Request</button> </form>
+                </div>
+             </div>
+
+             <div id="withdraw-money-section" class="section">
+                <h2 class="page-title">Withdraw Money</h2>
+                <div id="withdraw-success" class="message success-message"></div>
+                <div id="withdraw-error" class="message error-message"></div>
                  <div class="content-card">
-                    <h3>Add Money</h3>
-                    <p class="info-text" style="background:var(--input-bg); border-radius:8px; padding:15px; text-align:center;">Send money to <strong>01852093429 (Bkash)</strong>. Then submit details.</p>
-                    <form onsubmit="return false;" id="add-money-form"> <div class="form-field"><input type="text" id="transaction-id" placeholder="Transaction ID" required></div> <div class="form-field"><input type="number" id="add-amount" placeholder="Amount (BDT)" required></div> <button id="add-money-btn" class="btn btn-primary ripple-effect">Submit Request</button> </form>
-                 </div>
-                 <div class="content-card">
-                    <h3>Withdraw</h3>
                     <form onsubmit="return false;" id="withdraw-form"> <div class="form-field"><input type="text" id="bkash-number" placeholder="Bkash Number" required></div> <div class="form-field"><input type="number" id="withdraw-amount" placeholder="Amount (BDT) (min 70 BDT)" required></div> <button id="withdraw-btn" class="btn btn-primary ripple-effect">Request Withdraw</button> </form>
                  </div>
+             </div>
+             
+             <div id="transfer-section" class="section">
+                <h2 class="page-title">Transfer Balance</h2>
+                <div id="transfer-success" class="message success-message"></div>
+                <div id="transfer-error" class="message error-message"></div>
                  <div class="content-card">
-                    <h3>Transfer Balance</h3>
                     <form onsubmit="return false;" id="transfer-form"> <div class="form-field"><input type="text" id="transfer-username" placeholder="Recipient's Username" required></div> <div class="form-field"><input type="number" id="transfer-amount" placeholder="Amount (BDT) (min 30 BDT)" required></div> <button id="transfer-btn" class="btn btn-special ripple-effect">Transfer</button> </form>
                  </div>
+             </div>
+
+             <div id="withdraw-list-section" class="section">
+                 <h2 class="page-title">Transaction History</h2>
                  <div class="content-card">
-                    <h3>Transaction History</h3>
                     <div id="transaction-history-list"></div>
                  </div>
+             </div>
+             
+            <div id="my-match-section" class="section">
+                 <h2 class="page-title">My Matches</h2>
+                 <div id="my-match-list" class="content-card">
+                     <p style="text-align: center;">You have not joined any matches yet.</p>
+                 </div>
             </div>
+
+            <div id="support-section" class="section">
+                <h2 class="page-title">Support</h2>
+                <div class="support-card">
+                    <h3>Follow Us</h3>
+                    <a href="https://t.me/ffarena2" target="_blank" class="follow-us-item ripple-effect">
+                        <svg class="telegram" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-1.39.2-1.61l15.35-5.8c.73-.27 1.36.17 1.15.94l-2.66 12.58c-.28 1.13-1.04 1.4-1.92.88L9.78 18.65z"/></svg>
+                        <span>Join our Telegram HelpLine</span>
+                    </a>
+                    <a href="#" class="follow-us-item ripple-effect">
+                        <svg class="youtube" viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.9-1.52-1.76-1.75C18.25 5 12 5 12 5s-6.25 0-7.82.44c-.86.23-1.52.89-1.75 1.75C2 8.75 2 12 2 12s0 3.25.43 4.81c.23.86.9 1.52 1.75 1.75C5.75 19 12 19 12 19s6.25 0 7.82-.44c.86-.23 1.52-.89 1.75-1.75C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.5 15.5V8.5l6 3.5l-6 3.5z"/></svg>
+                        <span>Watch tutorials on YouTube</span>
+                    </a>
+                    <a href="https://m.me/j/AbbZs9SZTbGHuEsX/" target="_blank" class="follow-us-item ripple-effect">
+                        <svg class="facebook" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-1.5c-1 0-1.5.5-1.5 1.5V12h3l-.5 3h-2.5v6.8c4.56-.93 8-4.96 8-9.8z"/></svg>
+                        <span>Message us on Facebook</span>
+                    </a>
+                     <a href="https://chat.whatsapp.com/Dzj6WpylyM60TpRqgSvk2C?mode=ac_t" target="_blank" class="follow-us-item ripple-effect">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M17.7 7.7c0 4.1-3.4 7.4-7.7 7.4-.7 0-1.3-.1-2-.2l-1.7 1.7L7 17.6c-.2-.2-.4-.4-.5-.7l.8-2.3c-1.4-1.4-2.2-3.3-2.2-5.4 0-4.1 3.4-7.4 7.7-7.4s7.7 3.3 7.7 7.4zM14.4 10.7l-1.7 1.7c-.1.1-.1.1-.2.2-.4-.1-.8-.2-1.2-.2-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 2.9-1.3 2.9-2.9c0-.4-.1-.8-.2-1.2l1.7-1.7c.4.4.6.9.6 1.5 0 1.6-1.3 2.9-2.9 2.9s-2.9-1.3-2.9-2.9 1.3-2.9 2.9-2.9c.6 0 1.1.2 1.5.6z"/></svg>
+                        <span>Join our WhatsApp Group</span>
+                    </a>
+                </div>
+                 <div class="support-card">
+                    <h3>Contact Us</h3>
+                    <div class="contact-us-item">
+                        <p>Email<strong>srpshourovdev@gmail.com</strong></p>
+                    </div>
+                     <div class="contact-us-item">
+                        <p>Phone<strong>01852093429</strong></p>
+                    </div>
+                 </div>
+            </div>
+
          </div>
-         <div class="bottom-nav">
-            <div class="bottom-nav-inner"> <button id="nav-profile-btn" class="ripple-effect"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile</button> <button id="nav-tournament-btn" class="active ripple-effect"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2zM8 11H6V9h2v2zm0-3H6V6h2v2zm6 5h-4v-2h4v2zm0-3h-4V9h4v2zm0-3h-4V6h4v2zm4 5h-2v-2h2v2zm0-3h-2V9h2v2z"/></svg>Tournaments</button> <button id="nav-finance-btn" class="ripple-effect"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2l-.01-12zM20 16H4V8h16v8zM12 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>Finance</button> </div>
-         </div>
+    </div>
+
+    <div id="side-menu-overlay"></div>
+    <div id="side-menu">
+        <div class="side-menu-header">
+            <button class="close-menu-btn">&times;</button>
+            <button class="settings-btn ripple-effect"> <!-- Added settings icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.7-.98L14 2.1c-.09-.2-.25-.33-.45-.33H10.45c-.2 0-.36.13-.45.33L9.1 4.07c-.6.23-1.18.58-1.7.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.09.75 1.7.98L10 21.9c.09.2.25.33.45.33h3.1c.2 0 .36-.13.45-.33l.9-1.93c.6-.23 1.18-.58 1.7-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zm-7.43-2.52c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            </button>
+            <div class="user-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+            <h3 id="menu-username">Srp Shourov</h3>
+            <p id="menu-user-email">srpshourov9@gmail.com</p>
+        </div>
+        <nav class="side-menu-nav">
+             <a href="#" id="nav-home-btn" class="active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Home</a>
+             <a href="#" id="nav-profile-btn"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>My Account</a>
+             <a href="#" id="nav-my-match-btn"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2zM8 11H6V9h2v2zm0-3H6V6h2v2zm6 5h-4v-2h4v2zm0-3h-4V9h4v2zm0-3h-4V6h4v2zm4 5h-2v-2h2v2zm0-3h-2V9h2v2z"/></svg>My Match</a>
+             <a href="#" id="nav-add-money-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Add Money</a>
+             <a href="#" id="nav-withdraw-money-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Withdraw Money</a>
+             <a href="#" id="nav-withdraw-list-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Transaction History</a>
+             <a href="#" id="nav-transfer-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 14h-2v2h2v-2zm-4 0H9v2h2v-2zm10-4V7h-3V4h-2v3h-3v3h-2V7H8V4H6v3H3v3h2v2H3v3h3v3h2v-3h3v-3h2v3h3v-3h2v-2h3v-3h-2v-2h-2zm-4 4H7v-2h10v2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Transfer</a>
+             <a href="#" id="nav-support-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Support</a>
+             <a href="#" id="menu-logout-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>Logout</a>
+        </nav>
     </div>
 </div>
     
@@ -494,7 +649,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     import { getDatabase, ref, set, onValue, runTransaction, get, push, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
     // --- Firebase and Auth Initialization ---
@@ -512,13 +667,17 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth();
     const db = getDatabase();
+    
+    // --- Set Auth Persistence to NONE (in-memory) ---
+    setPersistence(auth, inMemoryPersistence);
+
 
     // --- Global Variables & DOM Elements ---
     const sections = document.querySelectorAll('.section');
-    const navButtons = document.querySelectorAll('.bottom-nav button');
+    const menuNavLinks = document.querySelectorAll('.side-menu-nav a');
     let currentUserId = null;
     let countdownIntervals = {};
-    let tournamentCategories = {}; // To store category data
+    let tournamentCategories = {};
 
     // --- RIPPLE EFFECT FUNCTION ---
     function createRipple(event) {
@@ -526,48 +685,54 @@
         const circle = document.createElement("span");
         const diameter = Math.max(button.clientWidth, button.clientHeight);
         const radius = diameter / 2;
-
         const rect = button.getBoundingClientRect();
         circle.style.width = circle.style.height = `${diameter}px`;
         circle.style.left = `${event.clientX - rect.left - radius}px`;
         circle.style.top = `${event.clientY - rect.top - radius}px`;
         circle.classList.add("ripple");
-
         const ripple = button.getElementsByClassName("ripple")[0];
-        if (ripple) {
-            ripple.remove();
-        }
+        if (ripple) { ripple.remove(); }
         button.appendChild(circle);
     }
     
     function applyRippleEffect() {
-        const buttons = document.querySelectorAll(".ripple-effect");
-        for (const button of buttons) {
-            button.addEventListener("click", createRipple);
-        }
+        document.querySelectorAll(".ripple-effect").forEach(btn => btn.addEventListener("click", createRipple));
     }
 
 
-    // --- Core Functions ---
+    // --- Core UI & Message Functions ---
+    function getFriendlyErrorMessage(error) {
+        const defaultMessage = "An unexpected error occurred. Please try again.";
+        if (!error || !error.code) return defaultMessage;
+        
+        switch (error.code) {
+            case 'auth/invalid-email':
+                return 'FFARENA Error: Please enter a valid email address.';
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+                return 'FFARENA Error: Invalid credentials. Please check your email and password.';
+            case 'auth/email-already-in-use':
+                return 'FFARENA Error: This email address is already registered.';
+            case 'auth/weak-password':
+                return 'FFARENA Error: Password is too weak. It should be at least 6 characters.';
+            default:
+                // Clean up the generic Firebase message
+                return `FFARENA Error: ${error.code.replace('auth/', '').replace(/-/g, ' ')}`;
+        }
+    }
+    
     function showMessage(id, msg, isError = false) {
         const el = document.getElementById(id);
         if (el) {
             el.textContent = msg;
-            el.classList.toggle('error-message', isError);
-            el.classList.toggle('success-message', !isError);
+            el.className = isError ? 'message error-message' : 'message success-message';
             el.style.display = 'block';
         }
     }
     function hideMessage(id) { const el = document.getElementById(id); if (el) { el.style.display = 'none'; } }
     function showFlashMessage(id, msg, isError = false) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.textContent = msg;
-            el.classList.toggle('success-message', !isError);
-            el.classList.toggle('error-message', isError);
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 4000);
-        }
+        showMessage(id, msg, isError);
+        setTimeout(() => hideMessage(id), 4000);
     }
     
     function toggleForm(isLogin) {
@@ -580,23 +745,32 @@
     }
 
     function switchSection(targetId) {
-        sections.forEach(s => s.classList.toggle('active', s.id === targetId));
-        navButtons.forEach(b => b.classList.toggle('active', b.id.startsWith('nav-' + targetId.split('-')[0])));
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById(targetId)?.classList.add('active');
+
+        menuNavLinks.forEach(b => b.classList.toggle('active', b.id.includes(targetId.split('-')[0])));
         
         if(targetId === 'tournament-section') {
             showTournamentCategory('selection'); 
         }
 
         if (!currentUserId) return;
+        
         if (targetId === 'tournament-section') {
-            loadTournamentCategories().then(() => {
-                loadTournaments(currentUserId);
-            });
+            loadTournamentCategories().then(() => loadTournaments(currentUserId));
+        } else if (targetId === 'my-match-section') {
+            // Defer loading slightly to ensure DOM is ready and prevent "Cannot set properties of null"
+            setTimeout(() => {
+                loadMyMatches(currentUserId);
+            }, 50); 
+        } else if (targetId === 'profile-section') {
+             loadUserProfile(currentUserId);
+        } else if (['add-money-section', 'withdraw-money-section', 'transfer-section', 'withdraw-list-section'].includes(targetId)) {
+            loadTransactionHistory(currentUserId);
         }
-        else if (targetId === 'profile-section') loadUserProfile(currentUserId);
-        else if (targetId === 'finance-section') loadTransactionHistory(currentUserId);
+        closeSideMenu();
     }
-    
+
     function showTournamentCategory(targetId) {
         const selectionScreen = document.getElementById('tournament-category-selection');
         const backButton = document.getElementById('back-to-categories-btn');
@@ -613,6 +787,15 @@
         }
     }
 
+    function openSideMenu() {
+        document.getElementById('side-menu').classList.add('active');
+        document.getElementById('side-menu-overlay').classList.add('active');
+    }
+
+    function closeSideMenu() {
+        document.getElementById('side-menu').classList.remove('active');
+        document.getElementById('side-menu-overlay').classList.remove('active');
+    }
 
     // --- DATA LOADING FUNCTIONS ---
     async function loadTournamentCategories() {
@@ -621,19 +804,13 @@
             const categoriesSnap = await get(ref(db, 'tournament_categories'));
             if (categoriesSnap.exists()) {
                 tournamentCategories = categoriesSnap.val();
-                categoryContainer.innerHTML = ''; // Clear previous content
-
+                categoryContainer.innerHTML = '';
                 Object.entries(tournamentCategories).forEach(([key, category]) => {
-                    // **FIX:** Normalize the key from the database (e.g., 'clash_squad') to use hyphens ('clash-squad')
                     const normalizedKey = key.replace(/_/g, '-');
-                    
                     const card = document.createElement('div');
                     card.className = 'category-selection-card ripple-effect';
-                    
-                    const targetListId = `${normalizedKey}-tournaments`;
-                    card.dataset.target = targetListId; 
+                    card.dataset.target = `${normalizedKey}-tournaments`; 
                     card.style.backgroundImage = `url('${category.backgroundUrl || ''}')`;
-                    
                     card.innerHTML = `
                         <img src="${category.iconUrl || 'https://i.ibb.co/6yT4R45/default-avatar.png'}" alt="${category.name}" class="category-icon">
                         <div class="content">
@@ -659,16 +836,66 @@
         onValue(userRef, (snapshot) => {
             if (!snapshot.exists()) return;
             const data = snapshot.val();
-            document.getElementById('profile-username').textContent = data.username || 'N/A';
-            document.getElementById('profile-email').textContent = data.email || 'N/A';
-            document.getElementById('profile-balance').textContent = (data.balance || 0).toFixed(2);
+            const balance = (data.balance || 0).toFixed(2);
             
-            const localPic = localStorage.getItem('profilePic');
-            if (localPic) {
-                document.getElementById('profile-pic-img').src = localPic;
-            } else {
-                document.getElementById('profile-pic-img').src = data.profilePicUrl || "https://i.ibb.co/6yT4R45/default-avatar.png";
+            document.getElementById('header-balance').textContent = balance;
+            document.getElementById('menu-username').textContent = data.username || 'N/A';
+            document.getElementById('menu-user-email').textContent = data.email || 'N/A';
+            document.getElementById('profile-v2-username').textContent = data.username || 'N/A';
+            document.getElementById('profile-v2-email').textContent = data.email || 'N/A';
+            document.getElementById('profile-v2-phone').textContent = data.phone || 'Not Set';
+            document.getElementById('profile-v2-pin').textContent = data.pin || '****';
+            document.getElementById('profile-v2-balance').textContent = `${balance} BDT`;
+            
+            const localPic = localStorage.getItem(`profilePic_${uid}`);
+            document.getElementById('profile-v2-pic').src = localPic || data.profilePicUrl || "https://i.ibb.co/6yT4R45/default-avatar.png";
+        });
+        
+        get(ref(db, 'tournaments')).then(tournamentsSnap => {
+            let matchCount = 0;
+            if(tournamentsSnap.exists()){
+                tournamentsSnap.forEach(tSnap => {
+                    const players = tSnap.val().players || {};
+                    if(players[uid] || Object.values(players).some(p => p.authorizedUsers?.includes(uid))){
+                        matchCount++;
+                    }
+                });
             }
+            document.getElementById('profile-v2-matches').textContent = matchCount;
+        })
+    }
+    
+    function loadMyMatches(userId) {
+        const listEl = document.getElementById('my-match-list');
+        if (!listEl) {
+            console.warn("Element 'my-match-list' not found when trying to load matches.");
+            return;
+        }
+
+        listEl.innerHTML = '<p>Loading your matches...</p>';
+        onValue(ref(db, 'tournaments'), (snapshot) => {
+            const myMatches = [];
+            if(snapshot.exists()){
+                snapshot.forEach(childSnapshot => {
+                    const t = childSnapshot.val();
+                    const players = t.players || {};
+                    if(players[userId] || Object.values(players).some(p => p.authorizedUsers?.includes(userId))){
+                        myMatches.push({ key: childSnapshot.key, ...t });
+                    }
+                });
+            }
+
+            if(myMatches.length === 0){
+                listEl.innerHTML = '<p style="text-align:center;">You have not joined any matches yet.</p>';
+                return;
+            }
+
+            listEl.innerHTML = '';
+            myMatches.forEach(t => {
+                const card = createTournamentCard(t.key, t, userId);
+                listEl.appendChild(card);
+            });
+            applyRippleEffect();
         });
     }
 
@@ -691,9 +918,62 @@
         countdownIntervals[elementId] = setInterval(update, 1000);
     }
     
+    function createTournamentCard(key, t, currentUserId) {
+        const joinedPlayerCount = t.players ? Object.values(t.players).reduce((acc, p) => acc + (Array.isArray(p.gamerTags) ? p.gamerTags.length : 1), 0) : 0;
+        const maxPlayers = t.maxPlayers || 1;
+        const isFull = joinedPlayerCount >= maxPlayers;
+        const hasStarted = t.startTime ? new Date(t.startTime).getTime() < new Date().getTime() : false;
+
+        let hasAccess = t.players && currentUserId && (t.players[currentUserId] || Object.values(t.players).some(p => p.authorizedUsers?.includes(currentUserId)));
+        
+        const progressPercentage = (joinedPlayerCount / maxPlayers) * 100;
+        const prizeDetailsHtml = t.prizeDetails ? t.prizeDetails.replace(/\\n/g, '\n') : 'No prize details available.';
+        
+        let actionButtonHtml = hasAccess ? `<button class="btn btn-info room-id-btn ripple-effect" data-id="${key}">Room ID</button>` :
+                               (isFull || hasStarted) ? `<button class="btn" style="background-color:#5a6268; flex-grow:1" disabled>Full</button>` :
+                               `<button class="btn btn-success join-btn ripple-effect" data-id="${key}" data-fee="${t.entryFee}" data-players-per-team="${t.playersPerTeam || 1}">Join</button>`;
+
+        const card = document.createElement('div');
+        card.className = 'new-tournament-card';
+        card.innerHTML = `
+            <div class="card-header ripple-effect" data-id="${key}">
+                <img src="${t.imageUrl || 'https://i.ibb.co/6yT4R45/default-avatar.png'}" alt="mode">
+                <div class="card-header-title">
+                    <h3>${t.name}</h3>
+                    <p>${(t.playersPerTeam || 1) > 1 ? `${t.playersPerTeam} vs ${t.playersPerTeam}` : 'Solo'} | ${t.startTime ? new Date(t.startTime).toLocaleTimeString('en-BD', { hour: 'numeric', minute: '2-digit'}) : 'TBD'}</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="details-grid">
+                    <div class="detail-item"><p>TOTAL PRIZE</p><span>৳ ${t.totalPrize || 0}</span></div>
+                    <div class="detail-item"><p>PER KILL</p><span>৳ ${t.perKillBonus || 0}</span></div>
+                    <div class="detail-item"><p>ENTRY FEE</p><span>৳ ${t.entryFee || 0}</span></div>
+                </div>
+                <div class="sub-details-grid">
+                     <div class="detail-item"><p>TYPE</p><span>${t.type || ((t.playersPerTeam||1) > 1 ? 'Squad' : 'Solo')}</span></div>
+                     <div class="detail-item"><p>VERSION</p><span>${t.version || 'Mobile'}</span></div>
+                     <div class="detail-item"><p>MAP</p><span>${t.map || 'Bermuda'}</span></div>
+                </div>
+                <div class="countdown-container">${!hasStarted && t.startTime ? `<div class="countdown" id="countdown-${key}"></div>` : '<p class="match-started-text">Match Started</p>'}</div>
+                <div class="player-progress-section view-players-btn" data-id="${key}" data-max-players-per-team="${t.playersPerTeam || 1}">
+                    <span class="player-count">${joinedPlayerCount} Joined</span>
+                    <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercentage}%;"></div></div>
+                    <span class="player-count">${Math.max(0, maxPlayers - joinedPlayerCount)} Left</span>
+                </div>
+            </div>
+            <div class="prize-list-details" id="prize-list-${key}">${prizeDetailsHtml}</div>
+            <div class="card-footer">
+                <button class="btn btn-info prize-list-btn ripple-effect" data-target="prize-list-${key}">Prize List</button>
+                ${actionButtonHtml}
+            </div>`;
+        if (t.startTime && !hasStarted) startCountdown(`countdown-${key}`, t.startTime);
+        return card;
+    }
+
     function loadTournaments(currentUserId) {
         const classicListEl = document.getElementById('classic-tournaments');
         const clashSquadListEl = document.getElementById('clash-squad-tournaments');
+        // *** FIX: Corrected typo from document(document, ...) to document.getElementById(...) ***
         const loneWolfListEl = document.getElementById('lone-wolf-tournaments');
         
         onValue(ref(db, 'tournaments'), (snapshot) => {
@@ -709,92 +989,22 @@
             }
             
             snapshot.forEach(childSnapshot => {
-                const key = childSnapshot.key;
-                const t = childSnapshot.val();
-                if (!t) return;
-
-                const joinedPlayerCount = t.players ? Object.values(t.players).reduce((acc, p) => acc + (Array.isArray(p.gamerTags) ? p.gamerTags.length : 1), 0) : 0;
-                const maxPlayers = t.maxPlayers || 1;
-                const isFull = joinedPlayerCount >= maxPlayers;
-                const hasStarted = t.startTime ? new Date(t.startTime).getTime() < new Date().getTime() : false;
-
-                let hasAccess = false;
-                if (t.players && currentUserId) {
-                    if (t.players[currentUserId]) {
-                        hasAccess = true;
-                    } else {
-                        for (const playerData of Object.values(t.players)) {
-                            if (playerData.authorizedUsers && playerData.authorizedUsers.includes(currentUserId)) {
-                                hasAccess = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                const progressPercentage = (joinedPlayerCount / maxPlayers) * 100;
-                const prizeDetailsHtml = t.prizeDetails ? t.prizeDetails.replace(/\\n/g, '\n') : 'No prize details available.';
-                
-                let actionButtonHtml = hasAccess ? `<button class="btn btn-info room-id-btn ripple-effect" data-id="${key}">Room ID</button>` :
-                                       (isFull || hasStarted) ? `<button class="btn" style="background-color:#5a6268; flex-grow:1" disabled>Full</button>` :
-                                       `<button class="btn btn-success join-btn ripple-effect" data-id="${key}" data-fee="${t.entryFee}" data-players-per-team="${t.playersPerTeam || 1}">Join</button>`;
-
-                const card = document.createElement('div');
-                card.className = 'new-tournament-card';
-                card.innerHTML = `
-                    <div class="card-header ripple-effect" data-id="${key}">
-                        <img src="${t.imageUrl || 'https://i.ibb.co/6yT4R45/default-avatar.png'}" alt="mode">
-                        <div class="card-header-title">
-                            <h3>${t.name}</h3>
-                            <p>${(t.playersPerTeam || 1) > 1 ? `${t.playersPerTeam} vs ${t.playersPerTeam}` : 'Solo'} | ${t.startTime ? new Date(t.startTime).toLocaleTimeString('en-BD', { hour: 'numeric', minute: '2-digit'}) : 'TBD'}</p>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="details-grid">
-                            <div class="detail-item"><p>TOTAL PRIZE</p><span>৳ ${t.totalPrize || 0}</span></div>
-                            <div class="detail-item"><p>PER KILL</p><span>৳ ${t.perKillBonus || 0}</span></div>
-                            <div class="detail-item"><p>ENTRY FEE</p><span>৳ ${t.entryFee || 0}</span></div>
-                        </div>
-                        <div class="sub-details-grid">
-                             <div class="detail-item"><p>TYPE</p><span>${t.type || ((t.playersPerTeam||1) > 1 ? 'Squad' : 'Solo')}</span></div>
-                             <div class="detail-item"><p>VERSION</p><span>${t.version || 'Mobile'}</span></div>
-                             <div class="detail-item"><p>MAP</p><span>${t.map || 'Bermuda'}</span></div>
-                        </div>
-                        <div class="countdown-container">${!hasStarted && t.startTime ? `<div class="countdown" id="countdown-${key}"></div>` : '<p class="match-started-text">Match Started</p>'}</div>
-                        <div class="player-progress-section view-players-btn" data-id="${key}" data-max-players-per-team="${t.playersPerTeam || 1}">
-                            <span class="player-count">${joinedPlayerCount} Joined</span>
-                            <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPercentage}%;"></div></div>
-                            <span class="player-count">${Math.max(0, maxPlayers - joinedPlayerCount)} Left</span>
-                        </div>
-                    </div>
-                    <div class="prize-list-details" id="prize-list-${key}">${prizeDetailsHtml}</div>
-                    <div class="card-footer">
-                        <button class="btn btn-info prize-list-btn ripple-effect" data-target="prize-list-${key}">Prize List</button>
-                        ${actionButtonHtml}
-                    </div>`;
-
-                const category = t.category || 'classic'; // e.g. "clash-squad"
+                const card = createTournamentCard(childSnapshot.key, childSnapshot.val(), currentUserId);
+                const category = childSnapshot.val().category || 'classic';
                 const listEl = document.getElementById(`${category}-tournaments`);
+
                 if(listEl) {
                     listEl.appendChild(card);
-                    if(matchCounts[category] !== undefined) {
-                        matchCounts[category]++;
-                    }
-                } else { // Fallback to classic
+                    if(matchCounts[category] !== undefined) matchCounts[category]++;
+                } else {
                      classicListEl.appendChild(card);
                      matchCounts.classic++;
                 }
-
-                if (t.startTime && !hasStarted) startCountdown(`countdown-${key}`, t.startTime);
             });
 
-            // **FIX:** Update match counts on the category selection screen
-            Object.keys(matchCounts).forEach(categoryKey => { // categoryKey is "clash-squad"
-                // No conversion needed here as the ID was normalized in loadTournamentCategories
+            Object.keys(matchCounts).forEach(categoryKey => {
                 const countEl = document.getElementById(`${categoryKey}-match-count`);
-                if (countEl) {
-                    countEl.textContent = `${matchCounts[categoryKey]} Matches Found`;
-                }
+                if (countEl) countEl.textContent = `${matchCounts[categoryKey]} Matches Found`;
             });
 
             if(classicListEl.innerHTML === '') classicListEl.innerHTML = '<p style="text-align:center;">No Classic matches available.</p>';
@@ -807,6 +1017,10 @@
 
     async function loadTransactionHistory(userId) {
         const listEl = document.getElementById('transaction-history-list');
+        if (!listEl) {
+            console.warn("Element 'transaction-history-list' not found when trying to load transactions.");
+            return;
+        }
         listEl.innerHTML = '<p>Loading history...</p>';
         try {
             const [addMoneySnap, withdrawSnap, transfersSnap] = await Promise.all([
@@ -816,27 +1030,9 @@
             ]);
 
             let allTxs = [];
-
-            if (addMoneySnap.exists()) {
-                Object.entries(addMoneySnap.val()).forEach(([id, tx]) => {
-                    if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Add Money' }); }
-                });
-            }
-
-            if (withdrawSnap.exists()) {
-                Object.entries(withdrawSnap.val()).forEach(([id, tx]) => {
-                    if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Withdraw' }); }
-                });
-            }
-
-            if (transfersSnap.exists()) {
-                Object.entries(transfersSnap.val()).forEach(([id, tx]) => {
-                    if (tx) { 
-                        if (tx.senderId === userId) { allTxs.push({ id, ...tx, type: 'Sent' }); }
-                        if (tx.recipientId === userId) { allTxs.push({ id, ...tx, type: 'Received' }); }
-                    }
-                });
-            }
+            if (addMoneySnap.exists()) { Object.entries(addMoneySnap.val()).forEach(([id, tx]) => { if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Add Money' }); } }); }
+            if (withdrawSnap.exists()) { Object.entries(withdrawSnap.val()).forEach(([id, tx]) => { if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Withdraw' }); } }); }
+            if (transfersSnap.exists()) { Object.entries(transfersSnap.val()).forEach(([id, tx]) => { if (tx) { if (tx.senderId === userId) { allTxs.push({ id, ...tx, type: 'Sent' }); } if (tx.recipientId === userId) { allTxs.push({ id, ...tx, type: 'Received' }); } } }); }
 
             allTxs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
@@ -847,8 +1043,7 @@
             
             listEl.innerHTML = '';
             allTxs.forEach(tx => {
-                const timestamp = tx.timestamp ? new Date(tx.timestamp) : new Date();
-                const date = timestamp.toLocaleString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const date = new Date(tx.timestamp || Date.now()).toLocaleString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 let typeDisplay, amountDisplay, amountClass;
                 
                 if (tx.type === 'Sent') {
@@ -865,10 +1060,9 @@
                     if (status === 'Approved') {
                         amountDisplay = `${tx.type === 'Add Money' ? '+' : '-'}${tx.amount || 0} BDT`;
                         amountClass = tx.type === 'Add Money' ? 'Credit' : 'Debit';
-                    } else if (status === 'Rejected') {
-                        amountDisplay = `Rejected`; amountClass = 'Rejected'; 
                     } else {
-                        amountDisplay = status; amountClass = 'Pending';
+                        amountDisplay = status;
+                        amountClass = status; // 'Rejected' or 'Pending'
                     }
                 }
                 const itemEl = document.createElement('div');
@@ -886,47 +1080,29 @@
     function closeDetailsModal() { document.getElementById('details-modal-overlay').classList.remove('active'); }
     function closePlayerListModal() { document.getElementById('player-list-modal-overlay').classList.remove('active'); }
     function closeJoinTeamModal() { document.getElementById('join-team-modal-overlay').classList.remove('active'); }
-
     async function showTournamentDetailsModal(tournamentId) {
         const modalOverlay = document.getElementById('details-modal-overlay');
         const modalTitleEl = document.getElementById('details-modal-title');
         const modalContentEl = document.getElementById('details-modal-content');
-
         modalTitleEl.textContent = 'Loading...';
         modalContentEl.innerHTML = '<p>Fetching tournament information...</p>';
         modalOverlay.classList.add('active');
-
         try {
             const tournamentSnap = await get(ref(db, `tournaments/${tournamentId}`));
             if (!tournamentSnap.exists()) throw new Error("Tournament not found.");
             const t = tournamentSnap.val();
-            
             modalTitleEl.textContent = t.name;
             let roomDetailsHtml = ``;
-
             const players = t.players || {};
-            let hasAccess = false;
-            if(currentUserId && players[currentUserId]){
-                hasAccess = true;
-            } else if (currentUserId) {
-                for (const playerData of Object.values(players)) {
-                    if (playerData.authorizedUsers && playerData.authorizedUsers.includes(currentUserId)) {
-                        hasAccess = true;
-                        break;
-                    }
-                }
-            }
-
+            let hasAccess = currentUserId && (players[currentUserId] || Object.values(players).some(p => p.authorizedUsers?.includes(currentUserId)));
             if(hasAccess){
                 roomDetailsHtml = `
                 <div class="details-modal-section">
                     <h4>Room Details</h4>
                     <p><strong>Room ID:</strong> ${t.roomID || 'Announced Soon'}</p>
                     <p><strong>Password:</strong> ${t.roomPass || 'Announced Soon'}</p>
-                </div>
-                `;
+                </div>`;
             }
-
             modalContentEl.innerHTML = `
                 <div class="details-modal-section">
                     <h4>Key Information</h4>
@@ -937,13 +1113,9 @@
                 <div class="details-modal-section">
                     <h4>Details & Rules</h4>
                     <p style="white-space: pre-wrap; word-wrap: break-word;">${t.detailsAndRules || 'No specific rules provided.'}</p>
-                </div>
-            `;
-        } catch (error) {
-            modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load details: ${error.message}</p>`;
-        }
-    }
-
+                </div>`;
+        } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load details: ${error.message}</p>`; }
+     }
     async function showPlayerListModal(tournamentId, maxPlayersPerTeam) {
         const modalOverlay = document.getElementById('player-list-modal-overlay');
         const modalContentEl = document.getElementById('player-list-modal-content');
@@ -952,366 +1124,159 @@
         try {
             const playersSnap = await get(ref(db, `tournaments/${tournamentId}/players`));
             const allTeams = playersSnap.exists() ? playersSnap.val() : {};
-
-            let isUserAlreadyInTeam = false;
-            if(currentUserId){
-                if (allTeams[currentUserId]) { 
-                    isUserAlreadyInTeam = true;
-                } else { 
-                    for (const team of Object.values(allTeams)) {
-                        if (team.authorizedUsers && team.authorizedUsers.includes(currentUserId)) {
-                            isUserAlreadyInTeam = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (Object.keys(allTeams).length === 0) {
-                modalContentEl.innerHTML = '<p>No teams have joined yet.</p>';
-                return;
-            }
-
+            let isUserAlreadyInTeam = currentUserId && (allTeams[currentUserId] || Object.values(allTeams).some(team => team.authorizedUsers?.includes(currentUserId)));
+            if (Object.keys(allTeams).length === 0) { modalContentEl.innerHTML = '<p>No teams have joined yet.</p>'; return; }
             modalContentEl.innerHTML = '';
             Object.entries(allTeams).forEach(([teamLeaderId, team]) => {
                 const teamCard = document.createElement('div');
                 teamCard.className = 'team-view-card';
-
                 const gamertagsHtml = team.gamerTags.map(tag => `<li>${tag}</li>`).join('');
                 const isTeamFull = team.gamerTags.length >= maxPlayersPerTeam;
                 const availableSlots = maxPlayersPerTeam - team.gamerTags.length;
-                
-                let joinButtonHtml = '';
-                if (!isTeamFull && !isUserAlreadyInTeam) {
-                     joinButtonHtml = `<button class="btn btn-success join-existing-team-btn ripple-effect"
-                                      data-tournament-id="${tournamentId}"
-                                      data-team-leader-id="${teamLeaderId}"
-                                      data-available-slots="${availableSlots}">Join Team</button>`;
-                }
-
-                teamCard.innerHTML = `
-                    <h4>${team.teamName || 'Unnamed Team'}</h4>
-                    <p class="slot-count">Players: ${team.gamerTags.length}/${maxPlayersPerTeam}</p>
-                    <ul class="gamertag-list">${gamertagsHtml}</ul>
-                    ${joinButtonHtml}
-                `;
+                let joinButtonHtml = (!isTeamFull && !isUserAlreadyInTeam) ? `<button class="btn btn-success join-existing-team-btn ripple-effect" data-tournament-id="${tournamentId}" data-team-leader-id="${teamLeaderId}" data-available-slots="${availableSlots}">Join Team</button>` : '';
+                teamCard.innerHTML = `<h4>${team.teamName || 'Unnamed Team'}</h4><p class="slot-count">Players: ${team.gamerTags.length}/${maxPlayersPerTeam}</p><ul class="gamertag-list">${gamertagsHtml}</ul>${joinButtonHtml}`;
                 modalContentEl.appendChild(teamCard);
             });
             applyRippleEffect();
-
         } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load player list. ${error.message}</p>`; }
     }
-
     function showJoinTournamentModal(tournamentId, entryFee, playersPerTeam) {
         const modalOverlay = document.getElementById('gamer-tag-modal-overlay');
         const gamerTagInputsContainer = document.getElementById('gamer-tag-inputs');
         gamerTagInputsContainer.innerHTML = '';
         hideMessage('gamer-tag-error');
-
-        let inputHtml = `
-            <div class="form-field" style="margin-bottom: 20px;">
-                <label for="join-team-name">Team Name:</label>
-                <input type="text" id="join-team-name" placeholder="Enter your team name" required>
-            </div>
-        `;
-        for (let i = 0; i < playersPerTeam; i++) {
-            const placeholderText = i === 0 ? "Enter Your Gamer Tag" : "Enter Gamer Tag or 'add'";
-            inputHtml += `<div class="player-input-group">
-                <div class="form-field" style="margin-bottom: 12px;">
-                    <label for="gamer-tag-input-${i}">Gamer Tag (Player ${i + 1}):</label>
-                    <input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="${placeholderText}">
-                </div>
-                <div class="form-field" style="margin-bottom: 0;">
-                     <label for="username-input-${i}">Player's Username (Optional):</label>
-                     <input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user">
-                </div>
-            </div>`;
-        }
+        let inputHtml = `<div class="form-field" style="margin-bottom: 20px;"><label for="join-team-name">Team Name:</label><input type="text" id="join-team-name" placeholder="Enter your team name" required></div>`;
+        for (let i = 0; i < playersPerTeam; i++) { inputHtml += `<div class="player-input-group"><div class="form-field" style="margin-bottom: 12px;"><label for="gamer-tag-input-${i}">Gamer Tag (Player ${i + 1}):</label><input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="${i === 0 ? "Enter Your Gamer Tag" : "Enter Gamer Tag or 'add'"}"></div><div class="form-field" style="margin-bottom: 0;"><label for="username-input-${i}">Player's Username (Optional):</label><input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user"></div></div>`; }
         gamerTagInputsContainer.innerHTML = inputHtml;
         modalOverlay.classList.add('active');
-
         document.getElementById('confirm-join-btn').onclick = async () => {
             const teamName = document.getElementById('join-team-name').value.trim();
             if (!teamName) return showMessage('gamer-tag-error', 'Team Name is required.', true);
-
-            const addKeyword = 'add';
             const gamerTagInputs = [...document.querySelectorAll('.gamer-tag-input-field')];
             const usernameInputs = [...document.querySelectorAll('.username-input-field')];
-            
-            let finalGamerTags = [];
-            let collectedUsernames = [];
-
+            let finalGamerTags = [], collectedUsernames = [];
             for (let i = 0; i < gamerTagInputs.length; i++) {
                 const tag = gamerTagInputs[i].value.trim();
                 const username = usernameInputs[i].value.trim();
-                
-                if(i === 0) {
-                    if (!tag) return showMessage('gamer-tag-error', 'Your Gamer Tag (Player 1) is required.', true);
-                    if (tag.toLowerCase() === addKeyword) return showMessage('gamer-tag-error', "Player 1's Gamer Tag cannot be 'add'.", true);
-                }
-
-                if (tag && tag.toLowerCase() !== addKeyword) {
-                    finalGamerTags.push(tag);
-                    if (username) collectedUsernames.push(username.toLowerCase());
-                }
+                if(i === 0) { if (!tag) return showMessage('gamer-tag-error', 'Your Gamer Tag (Player 1) is required.', true); if (tag.toLowerCase() === 'add') return showMessage('gamer-tag-error', "Player 1's Gamer Tag cannot be 'add'.", true); }
+                if (tag && tag.toLowerCase() !== 'add') { finalGamerTags.push(tag); if (username) collectedUsernames.push(username.toLowerCase()); }
             }
-            
             if (finalGamerTags.length === 0) return showMessage('gamer-tag-error', 'Please enter at least one valid Gamer Tag.', true);
-
             const totalFee = entryFee * finalGamerTags.length;
             let authorizedUserIds = [currentUserId]; 
-
             if (collectedUsernames.length > 0) {
                  try {
                     const allUsersSnap = await get(ref(db, 'users'));
                     if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
                     const usernameToUidMap = {};
-                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => {
-                        if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid;
-                    });
+                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => { if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid; });
                     for (const username of collectedUsernames) {
                         const foundUid = usernameToUidMap[username];
-                        if (foundUid && !authorizedUserIds.includes(foundUid)) {
-                             authorizedUserIds.push(foundUid);
-                        } else if (!foundUid) {
-                            throw new Error(`User "${username}" not found.`);
-                        }
+                        if (foundUid && !authorizedUserIds.includes(foundUid)) authorizedUserIds.push(foundUid);
+                        else if (!foundUid) throw new Error(`User "${username}" not found.`);
                     }
-                } catch(error) { return showMessage('gamer-tag-error', error.message, true); }
+                } catch(error) { return showMessage('gamer-tag-error', getFriendlyErrorMessage(error), true); }
             }
-
             try {
-                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
-                    if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee;
-                    else throw new Error("Insufficient balance.");
-                });
-                
-                await set(ref(db, `tournaments/${tournamentId}/players/${currentUserId}`), {
-                    teamName,
-                    gamerTags: finalGamerTags,
-                    joinedAt: Date.now(),
-                    authorizedUsers: authorizedUserIds 
-                });
-
+                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => { if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee; else throw new Error("Insufficient balance."); });
+                await set(ref(db, `tournaments/${tournamentId}/players/${currentUserId}`), { teamName, gamerTags: finalGamerTags, joinedAt: Date.now(), authorizedUsers: authorizedUserIds });
                 showFlashMessage('tournament-success', 'Successfully created team and joined!');
                 modalOverlay.classList.remove('active');
-            } catch (error) {
-                showMessage('gamer-tag-error', error.message.includes("Insufficient balance") ? `Insufficient balance. Required: ${totalFee} BDT` : 'Failed to join. Try again.', true);
-            }
+            } catch (error) { showMessage('gamer-tag-error', error.message.includes("Insufficient balance") ? `Insufficient balance. Required: ${totalFee} BDT` : getFriendlyErrorMessage(error), true); }
         };
-
         document.getElementById('cancel-join-btn').onclick = () => modalOverlay.classList.remove('active');
     }
-
     function showJoinExistingTeamModal(tournamentId, teamLeaderId, availableSlots) {
         const modal = document.getElementById('join-team-modal-overlay');
         const inputsContainer = document.getElementById('join-team-inputs');
         inputsContainer.innerHTML = '';
         hideMessage('join-team-error');
-
         let inputHtml = '';
-        for (let i = 0; i < availableSlots; i++) {
-            inputHtml += `<div class="player-input-group">
-                            <div class="form-field" style="margin-bottom: 12px;">
-                               <label for="join-new-gamertag-${i}">New Teammate's Gamer Tag (${i + 1}):</label>
-                               <input type="text" id="join-new-gamertag-${i}" class="join-new-gamertag-field" placeholder="Enter Gamer Tag or 'add'">
-                            </div>
-                            <div class="form-field" style="margin-bottom: 0;">
-                               <label for="join-new-username-${i}">Player's Username (Optional):</label>
-                               <input type="text" id="join-new-username-${i}" class="join-new-username-field" placeholder="Share room access with user">
-                            </div>
-                          </div>`;
-        }
+        for (let i = 0; i < availableSlots; i++) { inputHtml += `<div class="player-input-group"><div class="form-field" style="margin-bottom: 12px;"><label for="join-new-gamertag-${i}">New Teammate's Gamer Tag (${i + 1}):</label><input type="text" id="join-new-gamertag-${i}" class="join-new-gamertag-field" placeholder="Enter Gamer Tag or 'add'"></div><div class="form-field" style="margin-bottom: 0;"><label for="join-new-username-${i}">Player's Username (Optional):</label><input type="text" id="join-new-username-${i}" class="join-new-username-field" placeholder="Share room access with user"></div></div>`;}
         inputsContainer.innerHTML = inputHtml;
         modal.classList.add('active');
-
         document.getElementById('confirm-join-team-btn').onclick = async () => {
-            const addKeyword = 'add';
             const gamertagInputs = [...document.querySelectorAll('.join-new-gamertag-field')];
             const usernameInputs = [...document.querySelectorAll('.join-new-username-field')];
-
-            let validNewGamerTags = [];
-            let collectedUsernames = [];
-
-            for (let i=0; i < gamertagInputs.length; i++) {
-                const tag = gamertagInputs[i].value.trim();
-                const username = usernameInputs[i].value.trim();
-                if (tag && tag.toLowerCase() !== addKeyword) {
-                    validNewGamerTags.push(tag);
-                    if (username) collectedUsernames.push(username.toLowerCase());
-                }
-            }
-
-            if (validNewGamerTags.length === 0) {
-                return showMessage('join-team-error', "Please enter at least one valid Gamer Tag.", true);
-            }
-
+            let validNewGamerTags = [], collectedUsernames = [];
+            for (let i=0; i < gamertagInputs.length; i++) { const tag = gamertagInputs[i].value.trim(); const username = usernameInputs[i].value.trim(); if (tag && tag.toLowerCase() !== 'add') { validNewGamerTags.push(tag); if (username) collectedUsernames.push(username.toLowerCase()); } }
+            if (validNewGamerTags.length === 0) { return showMessage('join-team-error', "Please enter at least one valid Gamer Tag.", true); }
             try {
                 const tournamentSnap = await get(ref(db, `tournaments/${tournamentId}`));
                 if (!tournamentSnap.exists()) throw new Error("Tournament not found.");
-                
                 const entryFee = tournamentSnap.val().entryFee || 0;
                 const totalFee = entryFee * validNewGamerTags.length;
-
-                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
-                    if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee;
-                    else throw new Error(`Insufficient balance. Required: ${totalFee} BDT`);
-                });
-                
+                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => { if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee; else throw new Error(`Insufficient balance. Required: ${totalFee} BDT`); });
                 let newAuthorizedUserIds = [];
                 if (collectedUsernames.length > 0) {
                     const allUsersSnap = await get(ref(db, 'users'));
                     if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
                     const usernameToUidMap = {};
-                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => {
-                        if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid;
-                    });
-                    for (const username of collectedUsernames) {
-                        const foundUid = usernameToUidMap[username];
-                        if (foundUid) newAuthorizedUserIds.push(foundUid);
-                        else throw new Error(`User "${username}" not found.`);
-                    }
+                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => { if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid; });
+                    for (const username of collectedUsernames) { const foundUid = usernameToUidMap[username]; if (foundUid) newAuthorizedUserIds.push(foundUid); else throw new Error(`User "${username}" not found.`); }
                 }
-
                 const teamRef = ref(db, `tournaments/${tournamentId}/players/${teamLeaderId}`);
                 const teamSnap = await get(teamRef);
                 if (!teamSnap.exists()) throw new Error("Team could not be found.");
-                
                 const teamData = teamSnap.val();
                 const updatedTags = [...teamData.gamerTags, ...validNewGamerTags];
                 const updatedAuthUsers = [...new Set([...(teamData.authorizedUsers || []), ...newAuthorizedUserIds])];
-
-                await update(teamRef, { 
-                    gamerTags: updatedTags,
-                    authorizedUsers: updatedAuthUsers
-                });
-
+                await update(teamRef, { gamerTags: updatedTags, authorizedUsers: updatedAuthUsers });
                 showFlashMessage('tournament-success', 'Successfully joined the team!');
                 modal.classList.remove('active');
                 closePlayerListModal(); 
-                const maxPlayers = tournamentSnap.val().playersPerTeam || 1;
-                showPlayerListModal(tournamentId, maxPlayers);
-
-            } catch (error) {
-                showMessage('join-team-error', error.message, true);
-            }
+                showPlayerListModal(tournamentId, tournamentSnap.val().playersPerTeam || 1);
+            } catch (error) { showMessage('join-team-error', getFriendlyErrorMessage(error), true); }
         };
         document.getElementById('cancel-join-team-btn').onclick = closeJoinTeamModal;
     }
-
-
-    // --- FINANCE TRANSACTION HANDLERS ---
     async function handleAddMoney() {
-        hideMessage('finance-error');
+        hideMessage('add-money-error');
         const transactionId = document.getElementById('transaction-id').value.trim();
         const amount = parseFloat(document.getElementById('add-amount').value);
-        if (!transactionId || !amount || amount <= 0) {
-            return showFlashMessage('finance-error', 'Please provide a valid Transaction ID and Amount.', true);
-        }
+        if (!transactionId || !amount || amount <= 0) { return showFlashMessage('add-money-error', 'Please provide a valid Transaction ID and Amount.', true); }
         try {
             const newRequestRef = push(ref(db, 'addMoneyRequests'));
-            await set(newRequestRef, {
-                userId: currentUserId,
-                transactionId: transactionId,
-                amount: amount,
-                status: 'Pending',
-                timestamp: Date.now()
-            });
-            showFlashMessage('finance-success', 'Your add money request has been submitted.');
+            await set(newRequestRef, { userId: currentUserId, transactionId: transactionId, amount: amount, status: 'Pending', timestamp: Date.now() });
+            showFlashMessage('add-money-success', 'Your add money request has been submitted.');
             document.getElementById('add-money-form').reset();
-        } catch (error) {
-            showFlashMessage('finance-error', 'Failed to submit request. Please try again.', true);
-            console.error(error);
-        }
+        } catch (error) { showFlashMessage('add-money-error', getFriendlyErrorMessage(error), true); }
     }
-    
     async function handleWithdraw() {
-        hideMessage('finance-error');
+        hideMessage('withdraw-error');
         const bkashNumber = document.getElementById('bkash-number').value.trim();
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
-        if (!bkashNumber || bkashNumber.length < 11) {
-            return showFlashMessage('finance-error', 'Please enter a valid Bkash number.', true);
-        }
-        if (!amount || amount < 70) {
-            return showFlashMessage('finance-error', 'Minimum withdrawal amount is 70 BDT.', true);
-        }
-        
+        if (!bkashNumber || bkashNumber.length < 11) { return showFlashMessage('withdraw-error', 'Please enter a valid Bkash number.', true); }
+        if (!amount || amount < 70) { return showFlashMessage('withdraw-error', 'Minimum withdrawal amount is 70 BDT.', true); }
         try {
-            await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
-                if ((currentBalance || 0) < amount) {
-                    throw new Error("Insufficient balance for this withdrawal.");
-                }
-                return currentBalance - amount;
-            });
+            await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => { if ((currentBalance || 0) < amount) throw new Error("Insufficient balance for this withdrawal."); return currentBalance - amount; });
             const newRequestRef = push(ref(db, 'withdrawRequests'));
-            await set(newRequestRef, {
-                userId: currentUserId,
-                bkashNumber: bkashNumber,
-                amount: amount,
-                status: 'Pending',
-                timestamp: Date.now()
-            });
-            showFlashMessage('finance-success', 'Withdrawal request submitted successfully.');
+            await set(newRequestRef, { userId: currentUserId, bkashNumber: bkashNumber, amount: amount, status: 'Pending', timestamp: Date.now() });
+            showFlashMessage('withdraw-success', 'Withdrawal request submitted successfully.');
             document.getElementById('withdraw-form').reset();
         } catch (error) {
-            showFlashMessage('finance-error', error.message || 'Withdrawal failed. Please try again.', true);
-            if (!error.message.includes("Insufficient balance")) {
-                 runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => (currentBalance || 0) + amount);
-            }
+            showFlashMessage('withdraw-error', error.message || getFriendlyErrorMessage(error), true);
+            if (!error.message.includes("Insufficient balance")) { runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => (currentBalance || 0) + amount); }
         }
     }
-
     async function handleTransfer() {
-        hideMessage('finance-error');
+        hideMessage('transfer-error');
         const recipientUsername = document.getElementById('transfer-username').value.trim();
         const amount = parseFloat(document.getElementById('transfer-amount').value);
-
-        if (!recipientUsername || !amount || amount < 30) {
-            return showFlashMessage('finance-error', 'Enter a valid username and amount (min 30 BDT).', true);
-        }
-
+        if (!recipientUsername || !amount || amount < 30) { return showFlashMessage('transfer-error', 'Enter a valid username and amount (min 30 BDT).', true); }
         try {
             const allUsersSnap = await get(ref(db, 'users'));
             if (!allUsersSnap.exists()) throw new Error('Cannot find users.');
-            
-            let recipientId = null;
-            let senderUsername = 'Unknown';
-            allUsersSnap.forEach(userSnap => {
-                const userData = userSnap.val();
-                if (userData.username && userData.username.toLowerCase() === recipientUsername.toLowerCase()) {
-                    recipientId = userSnap.key;
-                }
-                if(userSnap.key === currentUserId){
-                    senderUsername = userData.username;
-                }
-            });
-
+            let recipientId = null, senderUsername = 'Unknown';
+            allUsersSnap.forEach(userSnap => { const userData = userSnap.val(); if (userData.username && userData.username.toLowerCase() === recipientUsername.toLowerCase()) { recipientId = userSnap.key; } if(userSnap.key === currentUserId){ senderUsername = userData.username; } });
             if (!recipientId) throw new Error('Recipient user not found.');
             if (recipientId === currentUserId) throw new Error('You cannot transfer money to yourself.');
-
-            // Perform transactions
-            await runTransaction(ref(db, `users/${currentUserId}/balance`), (balance) => {
-                if ((balance || 0) < amount) throw new Error('Insufficient balance.');
-                return balance - amount;
-            });
-
+            await runTransaction(ref(db, `users/${currentUserId}/balance`), (balance) => { if ((balance || 0) < amount) throw new Error('Insufficient balance.'); return balance - amount; });
             await runTransaction(ref(db, `users/${recipientId}/balance`), (balance) => (balance || 0) + amount);
-            
-            // Log the transfer
-            await push(ref(db, 'transfers'), {
-                senderId: currentUserId,
-                senderUsername: senderUsername,
-                recipientId: recipientId,
-                recipientUsername: recipientUsername,
-                amount: amount,
-                timestamp: Date.now()
-            });
-
-            showFlashMessage('finance-success', `Successfully transferred ${amount} BDT to ${recipientUsername}.`);
+            await push(ref(db, 'transfers'), { senderId: currentUserId, senderUsername, recipientId, recipientUsername, amount, timestamp: Date.now() });
+            showFlashMessage('transfer-success', `Successfully transferred ${amount} BDT to ${recipientUsername}.`);
             document.getElementById('transfer-form').reset();
-        } catch (error) {
-            showFlashMessage('finance-error', error.message, true);
-        }
+        } catch (error) { showFlashMessage('transfer-error', error.message, true); }
     }
 
 
@@ -1325,45 +1290,82 @@
         document.getElementById('login-btn').addEventListener('click', () => {
              const email = document.getElementById('login-email').value;
              const password = document.getElementById('login-password').value;
-             if (!email || !password) return showMessage('auth-error', 'Enter email and password.', true);
-             signInWithEmailAndPassword(auth, email, password).catch(err => showMessage('auth-error', err.message, true));
+             if (!email || !password) return showMessage('auth-error', 'Please enter email and password.', true);
+             signInWithEmailAndPassword(auth, email, password)
+                .catch(err => showMessage('auth-error', getFriendlyErrorMessage(err), true));
         });
 
         document.getElementById('register-btn').addEventListener('click', () => {
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
             const username = document.getElementById('register-username').value;
-            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const phone = document.getElementById('register-phone').value;
+            const pin = document.getElementById('register-pin').value;
 
-            if (!email || !password || !username) return showMessage('auth-error', 'Please fill all fields.', true);
-            if (password !== confirmPassword) return showMessage('auth-error', "Passwords do not match.", true);
-            if (username.length < 3) return showMessage('auth-error', "Username must be at least 3 characters long.", true);
+            if (!email || !password || !username || !phone || !pin) return showMessage('auth-error', 'Please fill all fields.', true);
+            if (pin.length !== 4 || !/^\d{4}$/.test(pin)) return showMessage('auth-error', 'Support PIN must be 4 digits.', true);
             
             createUserWithEmailAndPassword(auth, email, password)
                 .then(cred => set(ref(db, 'users/' + cred.user.uid), { 
-                    username, email, balance: 0, profilePicUrl: "https://i.ibb.co/6yT4R45/default-avatar.png"
+                    username, email, phone, pin, balance: 0, profilePicUrl: "https://i.ibb.co/6yT4R45/default-avatar.png"
                 }))
-                .then(() => toggleForm(true))
-                .catch(err => showMessage('auth-error', err.message, true));
+                .then(() => {
+                    showFlashMessage('auth-error', 'Registration successful! Please log in.', false);
+                    toggleForm(true)
+                })
+                .catch(err => showMessage('auth-error', getFriendlyErrorMessage(err), true));
         });
 
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.id.replace('nav-', '').replace('-btn', '') + '-section';
-                switchSection(targetId);
+        document.getElementById('profile-menu-btn').addEventListener('click', openSideMenu);
+        document.getElementById('side-menu-overlay').addEventListener('click', closeSideMenu);
+        document.querySelector('.close-menu-btn').addEventListener('click', closeSideMenu);
+        
+        // Settings button in side menu (no functionality requested, visual only)
+        document.querySelector('.side-menu-header .settings-btn').addEventListener('click', () => {
+            console.log('Settings button clicked (no functionality yet)');
+        });
+
+
+        menuNavLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.id.replace('nav-', '').replace('-btn', '') + '-section';
+                if(link.id === 'nav-home-btn') switchSection('tournament-section');
+                else if (link.id !== 'menu-logout-btn') switchSection(targetId);
             });
         });
+
+        document.getElementById('home-logo-link').addEventListener('click', (e) => { e.preventDefault(); switchSection('tournament-section'); });
         
+        const logoutUser = () => { signOut(auth); };
+        document.getElementById('menu-logout-btn').addEventListener('click', logoutUser);
+        document.getElementById('profile-v2-logout-btn').addEventListener('click', logoutUser);
+
         document.getElementById('profile-pic-upload').addEventListener('change', (event) => {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file || !currentUserId) return;
+
+            const MAX_FILE_SIZE_MB = 2; // Limit image size for localStorage
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                showFlashMessage('profile-info-success', `FFARENA Error: Image too large. Max ${MAX_FILE_SIZE_MB}MB for local storage.`, true);
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const imageDataUrl = e.target.result;
-                localStorage.setItem('profilePic', imageDataUrl);
-                document.getElementById('profile-pic-img').src = imageDataUrl;
-                showFlashMessage('profile-info-success', 'Profile picture updated locally!');
+                try {
+                    localStorage.setItem(`profilePic_${currentUserId}`, imageDataUrl);
+                    document.getElementById('profile-v2-pic').src = imageDataUrl;
+                    showFlashMessage('profile-info-success', 'Profile picture updated!');
+                } catch (error) {
+                    if (error.code === DOMException.QUOTA_EXCEEDED_ERR || error.name === 'QuotaExceededError') {
+                        showFlashMessage('profile-info-success', 'FFARENA Error: Storage full. Could not save profile picture. Try clearing browser data or using a smaller image.', true);
+                    } else {
+                        showFlashMessage('profile-info-success', 'FFARENA Error: Failed to update profile picture. Try again.', true);
+                    }
+                    console.error("Error setting local storage:", error);
+                }
             };
             reader.readAsDataURL(file);
         });
@@ -1386,49 +1388,31 @@
             const prizeListBtn = e.target.closest('.prize-list-btn');
             const roomIdBtn = e.target.closest('.room-id-btn');
             const viewPlayersBtn = e.target.closest('.view-players-btn');
-
-            if (prizeListBtn) {
-                const targetEl = document.getElementById(prizeListBtn.dataset.target);
-                if(targetEl) targetEl.style.display = targetEl.style.display === 'block' ? 'none' : 'block';
-            } else if (joinBtn) {
-                const { id, fee, playersPerTeam } = joinBtn.dataset;
-                showJoinTournamentModal(id, parseFloat(fee), parseInt(playersPerTeam));
-            } else if (cardHeader || roomIdBtn) {
-                const tournamentId = (cardHeader || roomIdBtn).dataset.id;
-                showTournamentDetailsModal(tournamentId);
-            } else if (viewPlayersBtn) {
-                const tournamentId = viewPlayersBtn.dataset.id;
-                const maxPlayers = viewPlayersBtn.dataset.maxPlayersPerTeam;
-                showPlayerListModal(tournamentId, parseInt(maxPlayers));
-            }
+            if (prizeListBtn) { const targetEl = document.getElementById(prizeListBtn.dataset.target); if(targetEl) targetEl.style.display = targetEl.style.display === 'block' ? 'none' : 'block'; } 
+            else if (joinBtn) { const { id, fee, playersPerTeam } = joinBtn.dataset; showJoinTournamentModal(id, parseFloat(fee), parseInt(playersPerTeam)); } 
+            else if (cardHeader || roomIdBtn) { const tournamentId = (cardHeader || roomIdBtn).dataset.id; showTournamentDetailsModal(tournamentId); } 
+            else if (viewPlayersBtn) { const tournamentId = viewPlayersBtn.dataset.id; const maxPlayers = viewPlayersBtn.dataset.maxPlayersPerTeam; showPlayerListModal(tournamentId, parseInt(maxPlayers)); }
         });
         
         document.getElementById('player-list-modal-overlay').addEventListener('click', e => {
-            if (e.target.classList.contains('join-existing-team-btn')) {
-                const { tournamentId, teamLeaderId, availableSlots } = e.target.dataset;
-                showJoinExistingTeamModal(tournamentId, teamLeaderId, parseInt(availableSlots));
-            }
+            if (e.target.classList.contains('join-existing-team-btn')) { const { tournamentId, teamLeaderId, availableSlots } = e.target.dataset; showJoinExistingTeamModal(tournamentId, teamLeaderId, parseInt(availableSlots)); }
         });
 
         document.getElementById('details-modal-close-btn').addEventListener('click', closeDetailsModal);
-        document.getElementById('details-modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'details-modal-overlay') closeDetailsModal(); });
-        
         document.getElementById('player-list-modal-close-btn').addEventListener('click', closePlayerListModal);
-        document.getElementById('player-list-modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'player-list-modal-overlay') closePlayerListModal(); });
-
         document.getElementById('cancel-join-team-btn').addEventListener('click', closeJoinTeamModal);
-        document.getElementById('join-team-modal-overlay').addEventListener('click', (e) => { if(e.target.id === 'join-team-modal-overlay') closeJoinTeamModal(); });
+        
+        // Close modals on overlay click
+        ['details-modal-overlay', 'player-list-modal-overlay', 'join-team-modal-overlay'].forEach(id => {
+             document.getElementById(id).addEventListener('click', (e) => { if(e.target.id === id) e.target.classList.remove('active'); });
+        });
 
         onAuthStateChanged(auth, user => {
             if (user) {
                 currentUserId = user.uid;
                 document.getElementById('auth-section').classList.remove('active');
                 document.getElementById('app-section').classList.add('active');
-                document.getElementById('logout-btn').onclick = () => {
-                    signOut(auth).then(() => {
-                        location.reload();
-                    });
-                };
+                
                 document.getElementById('add-money-btn').onclick = handleAddMoney;
                 document.getElementById('withdraw-btn').onclick = handleWithdraw;
                 document.getElementById('transfer-btn').onclick = handleTransfer;

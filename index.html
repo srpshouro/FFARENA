@@ -579,7 +579,7 @@
         <div class="side-menu-header">
             <button class="close-menu-btn">&times;</button>
             <button class="settings-btn ripple-effect"> <!-- Added settings icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.7-.98L14 2.1c-.09-.2-.25-.33-.45-.33H10.45c-.2 0-.36.13-.45.33L9.1 4.07c-.6.23-1.18.58-1.7.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.09.75 1.7.98L10 21.9c.09.2.25.33.45.33h3.1c.2 0 .36-.13.45-.33l.9-1.93c.6-.23 1.18-.58 1.7-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zm-7.43-2.52c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.09-.75-1.7-.98L14 2.1c-.09-.2-.25-.33-.45-.33H10.45c-.2 0-.36.13-.45.33L9.1 4.07c-.6.23-1.18.58-1.7.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12-.64l2 3.46c.12.22.39.3.61.22l2.49 1c.52.4 1.09.75 1.7.98L10 21.9c.09.2.25.33.45.33h3.1c.2 0 .36-.13.45-.33l.9-1.93c.6-.23 1.18-.58 1.7-.98l2.49 1c.22.09.49 0 .61.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zm-7.43-2.52c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
             </button>
             <div class="user-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -703,22 +703,30 @@
     // --- Core UI & Message Functions ---
     function getFriendlyErrorMessage(error) {
         const defaultMessage = "An unexpected error occurred. Please try again.";
-        if (!error || !error.code) return defaultMessage;
-        
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return 'FFARENA Error: Please enter a valid email address.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-                return 'FFARENA Error: Invalid credentials. Please check your email and password.';
-            case 'auth/email-already-in-use':
-                return 'FFARENA Error: This email address is already registered.';
-            case 'auth/weak-password':
-                return 'FFARENA Error: Password is too weak. It should be at least 6 characters.';
-            default:
-                // Clean up the generic Firebase message
-                return `FFARENA Error: ${error.code.replace('auth/', '').replace(/-/g, ' ')}`;
+        if (!error) return defaultMessage;
+
+        // Handle Firebase-specific errors
+        if (error.code) {
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    return 'FFARENA Error: Please enter a valid email address.';
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                    return 'FFARENA Error: Invalid credentials. Please check your email and password.';
+                case 'auth/email-already-in-use':
+                    return 'FFARENA Error: This email address is already registered.';
+                case 'auth/weak-password':
+                    return 'FFARENA Error: Password is too weak. It should be at least 6 characters.';
+                default:
+                    return `FFARENA Error: ${error.code.replace('auth/', '').replace(/-/g, ' ')}`;
+            }
         }
+        // Handle custom error messages (like from runTransaction)
+        if (error.message) {
+            return error.message;
+        }
+        
+        return defaultMessage;
     }
     
     function showMessage(id, msg, isError = false) {
@@ -759,10 +767,7 @@
         if (targetId === 'tournament-section') {
             loadTournamentCategories().then(() => loadTournaments(currentUserId));
         } else if (targetId === 'my-match-section') {
-            // Defer loading slightly to ensure DOM is ready and prevent "Cannot set properties of null"
-            setTimeout(() => {
-                loadMyMatches(currentUserId);
-            }, 50); 
+            loadMyMatches(currentUserId);
         } else if (targetId === 'profile-section') {
              loadUserProfile(currentUserId);
         } else if (['add-money-section', 'withdraw-money-section', 'transfer-section', 'withdraw-list-section'].includes(targetId)) {
@@ -830,7 +835,7 @@
         }
     }
 
-
+    // === পরিবর্তন শুরু: loadUserProfile ফাংশনে অ্যাক্সেস চেক আপডেট ===
     function loadUserProfile(uid) {
         const userRef = ref(db, `users/${uid}`);
         onValue(userRef, (snapshot) => {
@@ -855,16 +860,19 @@
             let matchCount = 0;
             if(tournamentsSnap.exists()){
                 tournamentsSnap.forEach(tSnap => {
-                    const players = tSnap.val().players || {};
-                    if(players[uid] || Object.values(players).some(p => p.authorizedUsers?.includes(uid))){
+                    const tournament = tSnap.val();
+                    const players = tournament.players || {};
+                    if (Object.values(players).some(team => team.members && team.members.some(member => member && member.userId === uid))) {
                         matchCount++;
                     }
                 });
             }
             document.getElementById('profile-v2-matches').textContent = matchCount;
-        })
+        });
     }
+    // === পরিবর্তন শেষ ===
     
+    // === পরিবর্তন শুরু: loadMyMatches ফাংশনে অ্যাক্সেস চেক আপডেট ===
     function loadMyMatches(userId) {
         const listEl = document.getElementById('my-match-list');
         if (!listEl) {
@@ -879,7 +887,8 @@
                 snapshot.forEach(childSnapshot => {
                     const t = childSnapshot.val();
                     const players = t.players || {};
-                    if(players[userId] || Object.values(players).some(p => p.authorizedUsers?.includes(userId))){
+                    // নতুন members কাঠামো ব্যবহার করে চেক
+                    if (Object.values(players).some(team => team.members && team.members.some(member => member && member.userId === userId))) {
                         myMatches.push({ key: childSnapshot.key, ...t });
                     }
                 });
@@ -891,13 +900,14 @@
             }
 
             listEl.innerHTML = '';
-            myMatches.forEach(t => {
+            myMatches.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(t => {
                 const card = createTournamentCard(t.key, t, userId);
                 listEl.appendChild(card);
             });
             applyRippleEffect();
         });
     }
+    // === পরিবর্তন শেষ ===
 
     function startCountdown(elementId, startTime) {
         if (countdownIntervals[elementId]) clearInterval(countdownIntervals[elementId]);
@@ -918,13 +928,21 @@
         countdownIntervals[elementId] = setInterval(update, 1000);
     }
     
+    // === পরিবর্তন শুরু: createTournamentCard ফাংশনে প্লেয়ার গণনা এবং অ্যাক্সেস চেক আপডেট ===
     function createTournamentCard(key, t, currentUserId) {
-        const joinedPlayerCount = t.players ? Object.values(t.players).reduce((acc, p) => acc + (Array.isArray(p.gamerTags) ? p.gamerTags.length : 1), 0) : 0;
+        const players = t.players || {};
+        const joinedPlayerCount = Object.values(players).reduce((acc, team) => acc + (team.members ? team.members.length : 0), 0);
+        
         const maxPlayers = t.maxPlayers || 1;
         const isFull = joinedPlayerCount >= maxPlayers;
         const hasStarted = t.startTime ? new Date(t.startTime).getTime() < new Date().getTime() : false;
 
-        let hasAccess = t.players && currentUserId && (t.players[currentUserId] || Object.values(t.players).some(p => p.authorizedUsers?.includes(currentUserId)));
+        let hasAccess = false;
+        if (players && currentUserId) {
+            hasAccess = Object.values(players).some(team =>
+                team.members && team.members.some(member => member && member.userId === currentUserId)
+            );
+        }
         
         const progressPercentage = (joinedPlayerCount / maxPlayers) * 100;
         const prizeDetailsHtml = t.prizeDetails ? t.prizeDetails.replace(/\\n/g, '\n') : 'No prize details available.';
@@ -969,11 +987,11 @@
         if (t.startTime && !hasStarted) startCountdown(`countdown-${key}`, t.startTime);
         return card;
     }
+    // === পরিবর্তন শেষ ===
 
     function loadTournaments(currentUserId) {
         const classicListEl = document.getElementById('classic-tournaments');
         const clashSquadListEl = document.getElementById('clash-squad-tournaments');
-        // *** FIX: Corrected typo from document(document, ...) to document.getElementById(...) ***
         const loneWolfListEl = document.getElementById('lone-wolf-tournaments');
         
         onValue(ref(db, 'tournaments'), (snapshot) => {
@@ -988,9 +1006,17 @@
                 return; 
             }
             
+            let tournaments = [];
             snapshot.forEach(childSnapshot => {
-                const card = createTournamentCard(childSnapshot.key, childSnapshot.val(), currentUserId);
-                const category = childSnapshot.val().category || 'classic';
+                tournaments.push({ key: childSnapshot.key, ...childSnapshot.val() });
+            });
+            
+            // Sort tournaments by start time (newest first)
+            tournaments.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+            tournaments.forEach(t => {
+                const card = createTournamentCard(t.key, t, currentUserId);
+                const category = t.category || 'classic';
                 const listEl = document.getElementById(`${category}-tournaments`);
 
                 if(listEl) {
@@ -1017,19 +1043,18 @@
 
     async function loadTransactionHistory(userId) {
         const listEl = document.getElementById('transaction-history-list');
-        if (!listEl) {
-            console.warn("Element 'transaction-history-list' not found when trying to load transactions.");
-            return;
-        }
+        if (!listEl) return;
         listEl.innerHTML = '<p>Loading history...</p>';
         try {
             const [addMoneySnap, withdrawSnap, transfersSnap] = await Promise.all([
-                get(ref(db, 'addMoneyRequests')),
-                get(ref(db, 'withdrawRequests')),
-                get(ref(db, 'transfers'))
+                get(ref(db, `addMoneyRequests`)),
+                get(ref(db, `withdrawRequests`)),
+                get(ref(db, `transfers`))
             ]);
 
             let allTxs = [];
+            // This is inefficient. Ideally, structure requests under userId.
+            // For now, filtering client-side.
             if (addMoneySnap.exists()) { Object.entries(addMoneySnap.val()).forEach(([id, tx]) => { if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Add Money' }); } }); }
             if (withdrawSnap.exists()) { Object.entries(withdrawSnap.val()).forEach(([id, tx]) => { if (tx && tx.userId === userId) { allTxs.push({ id, ...tx, type: 'Withdraw' }); } }); }
             if (transfersSnap.exists()) { Object.entries(transfersSnap.val()).forEach(([id, tx]) => { if (tx) { if (tx.senderId === userId) { allTxs.push({ id, ...tx, type: 'Sent' }); } if (tx.recipientId === userId) { allTxs.push({ id, ...tx, type: 'Received' }); } } }); }
@@ -1080,6 +1105,8 @@
     function closeDetailsModal() { document.getElementById('details-modal-overlay').classList.remove('active'); }
     function closePlayerListModal() { document.getElementById('player-list-modal-overlay').classList.remove('active'); }
     function closeJoinTeamModal() { document.getElementById('join-team-modal-overlay').classList.remove('active'); }
+    
+    // === পরিবর্তন শুরু: showTournamentDetailsModal ফাংশনে অ্যাক্সেস চেক আপডেট ===
     async function showTournamentDetailsModal(tournamentId) {
         const modalOverlay = document.getElementById('details-modal-overlay');
         const modalTitleEl = document.getElementById('details-modal-title');
@@ -1090,11 +1117,19 @@
         try {
             const tournamentSnap = await get(ref(db, `tournaments/${tournamentId}`));
             if (!tournamentSnap.exists()) throw new Error("Tournament not found.");
+            
             const t = tournamentSnap.val();
             modalTitleEl.textContent = t.name;
             let roomDetailsHtml = ``;
             const players = t.players || {};
-            let hasAccess = currentUserId && (players[currentUserId] || Object.values(players).some(p => p.authorizedUsers?.includes(currentUserId)));
+            
+            let hasAccess = false;
+            if (currentUserId) {
+                hasAccess = Object.values(players).some(team => 
+                    team.members && team.members.some(member => member && member.userId === currentUserId)
+                );
+            }
+
             if(hasAccess){
                 roomDetailsHtml = `
                 <div class="details-modal-section">
@@ -1116,6 +1151,9 @@
                 </div>`;
         } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load details: ${error.message}</p>`; }
      }
+    // === পরিবর্তন শেষ ===
+
+    // === পরিবর্তন শুরু: showPlayerListModal সম্পূর্ণ আপডেট করা হয়েছে ===
     async function showPlayerListModal(tournamentId, maxPlayersPerTeam) {
         const modalOverlay = document.getElementById('player-list-modal-overlay');
         const modalContentEl = document.getElementById('player-list-modal-content');
@@ -1123,113 +1161,255 @@
         modalOverlay.classList.add('active');
         try {
             const playersSnap = await get(ref(db, `tournaments/${tournamentId}/players`));
-            const allTeams = playersSnap.exists() ? playersSnap.val() : {};
-            let isUserAlreadyInTeam = currentUserId && (allTeams[currentUserId] || Object.values(allTeams).some(team => team.authorizedUsers?.includes(currentUserId)));
-            if (Object.keys(allTeams).length === 0) { modalContentEl.innerHTML = '<p>No teams have joined yet.</p>'; return; }
+            if (!playersSnap.exists()) {
+                modalContentEl.innerHTML = '<p>No teams have joined yet.</p>';
+                return;
+            }
+            const allTeams = playersSnap.val();
+
+            let isUserAlreadyInTeam = Object.values(allTeams).some(team => 
+                team.members && team.members.some(member => member && member.userId === currentUserId)
+            );
+
             modalContentEl.innerHTML = '';
             Object.entries(allTeams).forEach(([teamLeaderId, team]) => {
+                if (!team || !Array.isArray(team.members)) {
+                    // পুরানো বা ভুল ডেটা থাকলে এড়িয়ে যান
+                    return; 
+                }
+
                 const teamCard = document.createElement('div');
                 teamCard.className = 'team-view-card';
-                const gamertagsHtml = team.gamerTags.map(tag => `<li>${tag}</li>`).join('');
-                const isTeamFull = team.gamerTags.length >= maxPlayersPerTeam;
-                const availableSlots = maxPlayersPerTeam - team.gamerTags.length;
-                let joinButtonHtml = (!isTeamFull && !isUserAlreadyInTeam) ? `<button class="btn btn-success join-existing-team-btn ripple-effect" data-tournament-id="${tournamentId}" data-team-leader-id="${teamLeaderId}" data-available-slots="${availableSlots}">Join Team</button>` : '';
-                teamCard.innerHTML = `<h4>${team.teamName || 'Unnamed Team'}</h4><p class="slot-count">Players: ${team.gamerTags.length}/${maxPlayersPerTeam}</p><ul class="gamertag-list">${gamertagsHtml}</ul>${joinButtonHtml}`;
+                
+                const gamertagsHtml = team.members.map(member => `<li>${member.gamerTag || 'Unknown Player'}</li>`).join('');
+                
+                const membersCount = team.members.length;
+                const isTeamFull = membersCount >= maxPlayersPerTeam;
+                const availableSlots = maxPlayersPerTeam - membersCount;
+
+                let joinButtonHtml = (!isTeamFull && !isUserAlreadyInTeam) 
+                    ? `<button class="btn btn-success join-existing-team-btn ripple-effect" data-tournament-id="${tournamentId}" data-team-leader-id="${teamLeaderId}" data-available-slots="${availableSlots}">Join Team</button>` 
+                    : '';
+
+                teamCard.innerHTML = `
+                    <h4>${team.teamName || 'Unnamed Team'}</h4>
+                    <p class="slot-count">Players: ${membersCount}/${maxPlayersPerTeam}</p>
+                    <ul class="gamertag-list">${gamertagsHtml}</ul>
+                    ${joinButtonHtml}`;
+                
                 modalContentEl.appendChild(teamCard);
             });
             applyRippleEffect();
-        } catch (error) { modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load player list. ${error.message}</p>`; }
+        } catch (error) {
+            modalContentEl.innerHTML = `<p style="color: var(--error-color);">Could not load player list. ${error.message}</p>`;
+            console.error("Error in showPlayerListModal:", error);
+        }
     }
+    // === পরিবর্তন শেষ ===
+
+    // === পরিবর্তন শুরু: showJoinTournamentModal সম্পূর্ণ আপডেট করা হয়েছে ===
     function showJoinTournamentModal(tournamentId, entryFee, playersPerTeam) {
         const modalOverlay = document.getElementById('gamer-tag-modal-overlay');
         const gamerTagInputsContainer = document.getElementById('gamer-tag-inputs');
         gamerTagInputsContainer.innerHTML = '';
         hideMessage('gamer-tag-error');
-        let inputHtml = `<div class="form-field" style="margin-bottom: 20px;"><label for="join-team-name">Team Name:</label><input type="text" id="join-team-name" placeholder="Enter your team name" required></div>`;
-        for (let i = 0; i < playersPerTeam; i++) { inputHtml += `<div class="player-input-group"><div class="form-field" style="margin-bottom: 12px;"><label for="gamer-tag-input-${i}">Gamer Tag (Player ${i + 1}):</label><input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="${i === 0 ? "Enter Your Gamer Tag" : "Enter Gamer Tag or 'add'"}"></div><div class="form-field" style="margin-bottom: 0;"><label for="username-input-${i}">Player's Username (Optional):</label><input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user"></div></div>`; }
+
+        let inputHtml = `<div class="form-field" style="margin-bottom: 20px;">
+                            <label for="join-team-name">Team Name:</label>
+                            <input type="text" id="join-team-name" placeholder="Enter your team name" required>
+                         </div>`;
+        
+        for (let i = 0; i < playersPerTeam; i++) {
+            const usernameInputHtml = (i === 0) ? '' : `
+                <div class="form-field" style="margin-bottom: 0;">
+                    <label for="username-input-${i}">Player's Username (Optional):</label>
+                    <input type="text" id="username-input-${i}" class="username-input-field" placeholder="Share room access with user">
+                </div>`;
+            
+            inputHtml += `<div class="player-input-group">
+                            <div class="form-field" style="margin-bottom: 12px;">
+                                <label for="gamer-tag-input-${i}">Gamer Tag (Player ${i + 1}):</label>
+                                <input type="text" id="gamer-tag-input-${i}" class="gamer-tag-input-field" placeholder="${i === 0 ? "Enter Your Gamer Tag" : "Enter Gamer Tag or 'add'"}">
+                            </div>
+                            ${usernameInputHtml}
+                          </div>`;
+        }
         gamerTagInputsContainer.innerHTML = inputHtml;
         modalOverlay.classList.add('active');
+
         document.getElementById('confirm-join-btn').onclick = async () => {
             const teamName = document.getElementById('join-team-name').value.trim();
             if (!teamName) return showMessage('gamer-tag-error', 'Team Name is required.', true);
+
             const gamerTagInputs = [...document.querySelectorAll('.gamer-tag-input-field')];
-            const usernameInputs = [...document.querySelectorAll('.username-input-field')];
-            let finalGamerTags = [], collectedUsernames = [];
+            let newMembers = [];
+            let collectedUsernames = [];
+
             for (let i = 0; i < gamerTagInputs.length; i++) {
                 const tag = gamerTagInputs[i].value.trim();
-                const username = usernameInputs[i].value.trim();
-                if(i === 0) { if (!tag) return showMessage('gamer-tag-error', 'Your Gamer Tag (Player 1) is required.', true); if (tag.toLowerCase() === 'add') return showMessage('gamer-tag-error', "Player 1's Gamer Tag cannot be 'add'.", true); }
-                if (tag && tag.toLowerCase() !== 'add') { finalGamerTags.push(tag); if (username) collectedUsernames.push(username.toLowerCase()); }
+                const usernameInput = document.getElementById(`username-input-${i}`);
+                const username = usernameInput ? usernameInput.value.trim() : '';
+
+                if (i === 0 && (!tag || tag.toLowerCase() === 'add')) {
+                    return showMessage('gamer-tag-error', "Player 1's Gamer Tag is required and cannot be 'add'.", true);
+                }
+
+                if (tag && tag.toLowerCase() !== 'add') {
+                    let memberUserId = (i === 0) ? currentUserId : null;
+                    newMembers.push({ gamerTag: tag, userId: memberUserId });
+                    if (username) {
+                        collectedUsernames.push({ username: username.toLowerCase(), memberIndex: newMembers.length - 1 });
+                    }
+                }
             }
-            if (finalGamerTags.length === 0) return showMessage('gamer-tag-error', 'Please enter at least one valid Gamer Tag.', true);
-            const totalFee = entryFee * finalGamerTags.length;
-            let authorizedUserIds = [currentUserId]; 
-            if (collectedUsernames.length > 0) {
-                 try {
+
+            if (newMembers.length === 0) return showMessage('gamer-tag-error', 'Please enter at least one valid Gamer Tag.', true);
+            
+            const totalFee = entryFee * newMembers.length;
+
+            try {
+                if (collectedUsernames.length > 0) {
                     const allUsersSnap = await get(ref(db, 'users'));
                     if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
                     const usernameToUidMap = {};
-                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => { if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid; });
-                    for (const username of collectedUsernames) {
-                        const foundUid = usernameToUidMap[username];
-                        if (foundUid && !authorizedUserIds.includes(foundUid)) authorizedUserIds.push(foundUid);
-                        else if (!foundUid) throw new Error(`User "${username}" not found.`);
+                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => {
+                        if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid;
+                    });
+                    for (const item of collectedUsernames) {
+                        const foundUid = usernameToUidMap[item.username];
+                        if (foundUid) {
+                            newMembers[item.memberIndex].userId = foundUid;
+                        } else {
+                            throw new Error(`User "${item.username}" not found.`);
+                        }
                     }
-                } catch(error) { return showMessage('gamer-tag-error', getFriendlyErrorMessage(error), true); }
-            }
-            try {
-                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => { if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee; else throw new Error("Insufficient balance."); });
-                await set(ref(db, `tournaments/${tournamentId}/players/${currentUserId}`), { teamName, gamerTags: finalGamerTags, joinedAt: Date.now(), authorizedUsers: authorizedUserIds });
+                }
+
+                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
+                    if ((currentBalance || 0) < totalFee) throw new Error("Insufficient balance.");
+                    return currentBalance - totalFee;
+                });
+                
+                await set(ref(db, `tournaments/${tournamentId}/players/${currentUserId}`), {
+                    teamName: teamName,
+                    joinedAt: Date.now(),
+                    members: newMembers 
+                });
+
                 showFlashMessage('tournament-success', 'Successfully created team and joined!');
                 modalOverlay.classList.remove('active');
-            } catch (error) { showMessage('gamer-tag-error', error.message.includes("Insufficient balance") ? `Insufficient balance. Required: ${totalFee} BDT` : getFriendlyErrorMessage(error), true); }
+            } catch (error) {
+                showMessage('gamer-tag-error', getFriendlyErrorMessage(error), true);
+            }
         };
         document.getElementById('cancel-join-btn').onclick = () => modalOverlay.classList.remove('active');
     }
+    // === পরিবর্তন শেষ ===
+
+    // === পরিবর্তন শুরু: showJoinExistingTeamModal সম্পূর্ণ আপডেট করা হয়েছে ===
     function showJoinExistingTeamModal(tournamentId, teamLeaderId, availableSlots) {
         const modal = document.getElementById('join-team-modal-overlay');
         const inputsContainer = document.getElementById('join-team-inputs');
         inputsContainer.innerHTML = '';
         hideMessage('join-team-error');
+        
         let inputHtml = '';
-        for (let i = 0; i < availableSlots; i++) { inputHtml += `<div class="player-input-group"><div class="form-field" style="margin-bottom: 12px;"><label for="join-new-gamertag-${i}">New Teammate's Gamer Tag (${i + 1}):</label><input type="text" id="join-new-gamertag-${i}" class="join-new-gamertag-field" placeholder="Enter Gamer Tag or 'add'"></div><div class="form-field" style="margin-bottom: 0;"><label for="join-new-username-${i}">Player's Username (Optional):</label><input type="text" id="join-new-username-${i}" class="join-new-username-field" placeholder="Share room access with user"></div></div>`;}
+        for (let i = 0; i < availableSlots; i++) {
+            inputHtml += `<div class="player-input-group">
+                            <div class="form-field" style="margin-bottom: 12px;">
+                                <label for="join-new-gamertag-${i}">New Teammate's Gamer Tag (${i + 1}):</label>
+                                <input type="text" id="join-new-gamertag-${i}" class="join-new-gamertag-field" placeholder="Enter Gamer Tag or 'add'">
+                            </div>
+                            <div class="form-field" style="margin-bottom: 0;">
+                                <label for="join-new-username-${i}">Player's Username (Optional):</label>
+                                <input type="text" id="join-new-username-${i}" class="join-new-username-field" placeholder="Share room access with user">
+                            </div>
+                          </div>`;
+        }
         inputsContainer.innerHTML = inputHtml;
         modal.classList.add('active');
+
         document.getElementById('confirm-join-team-btn').onclick = async () => {
             const gamertagInputs = [...document.querySelectorAll('.join-new-gamertag-field')];
             const usernameInputs = [...document.querySelectorAll('.join-new-username-field')];
-            let validNewGamerTags = [], collectedUsernames = [];
-            for (let i=0; i < gamertagInputs.length; i++) { const tag = gamertagInputs[i].value.trim(); const username = usernameInputs[i].value.trim(); if (tag && tag.toLowerCase() !== 'add') { validNewGamerTags.push(tag); if (username) collectedUsernames.push(username.toLowerCase()); } }
-            if (validNewGamerTags.length === 0) { return showMessage('join-team-error', "Please enter at least one valid Gamer Tag.", true); }
+            
+            let newMembers = [];
+            let collectedUsernames = [];
+
+            // যে যোগ দিচ্ছে, তার UserID প্রথম সদস্য হিসেবে যুক্ত হবে
+            let isCurrentUserAdded = false;
+
+            for (let i = 0; i < gamertagInputs.length; i++) {
+                const tag = gamertagInputs[i].value.trim();
+                const username = usernameInputs[i].value.trim();
+                if (tag && tag.toLowerCase() !== 'add') {
+                    let memberUserId = null;
+                    if (!isCurrentUserAdded) {
+                        memberUserId = currentUserId;
+                        isCurrentUserAdded = true;
+                    }
+                    newMembers.push({ gamerTag: tag, userId: memberUserId });
+
+                    if (username) {
+                        collectedUsernames.push({ username: username.toLowerCase(), memberIndex: newMembers.length - 1 });
+                    }
+                }
+            }
+
+            if (newMembers.length === 0) {
+                return showMessage('join-team-error', "Please enter at least one valid Gamer Tag.", true);
+            }
+
             try {
                 const tournamentSnap = await get(ref(db, `tournaments/${tournamentId}`));
                 if (!tournamentSnap.exists()) throw new Error("Tournament not found.");
+                
                 const entryFee = tournamentSnap.val().entryFee || 0;
-                const totalFee = entryFee * validNewGamerTags.length;
-                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => { if ((currentBalance || 0) >= totalFee) return currentBalance - totalFee; else throw new Error(`Insufficient balance. Required: ${totalFee} BDT`); });
-                let newAuthorizedUserIds = [];
+                const totalFee = entryFee * newMembers.length;
+                
                 if (collectedUsernames.length > 0) {
                     const allUsersSnap = await get(ref(db, 'users'));
                     if (!allUsersSnap.exists()) throw new Error("Could not verify users.");
                     const usernameToUidMap = {};
-                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => { if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid; });
-                    for (const username of collectedUsernames) { const foundUid = usernameToUidMap[username]; if (foundUid) newAuthorizedUserIds.push(foundUid); else throw new Error(`User "${username}" not found.`); }
+                    Object.entries(allUsersSnap.val()).forEach(([uid, userData]) => {
+                        if (userData?.username) usernameToUidMap[userData.username.toLowerCase()] = uid;
+                    });
+                    for (const item of collectedUsernames) {
+                        const foundUid = usernameToUidMap[item.username];
+                        if (foundUid) {
+                            newMembers[item.memberIndex].userId = foundUid;
+                        } else {
+                            throw new Error(`User "${item.username}" not found.`);
+                        }
+                    }
                 }
+
+                await runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => {
+                    if ((currentBalance || 0) < totalFee) throw new Error(`Insufficient balance. Required: ${totalFee} BDT`);
+                    return currentBalance - totalFee;
+                });
+                
                 const teamRef = ref(db, `tournaments/${tournamentId}/players/${teamLeaderId}`);
                 const teamSnap = await get(teamRef);
                 if (!teamSnap.exists()) throw new Error("Team could not be found.");
+                
                 const teamData = teamSnap.val();
-                const updatedTags = [...teamData.gamerTags, ...validNewGamerTags];
-                const updatedAuthUsers = [...new Set([...(teamData.authorizedUsers || []), ...newAuthorizedUserIds])];
-                await update(teamRef, { gamerTags: updatedTags, authorizedUsers: updatedAuthUsers });
+                const updatedMembers = [...(teamData.members || []), ...newMembers];
+                
+                await update(teamRef, { members: updatedMembers });
+
                 showFlashMessage('tournament-success', 'Successfully joined the team!');
                 modal.classList.remove('active');
-                closePlayerListModal(); 
+                closePlayerListModal();
                 showPlayerListModal(tournamentId, tournamentSnap.val().playersPerTeam || 1);
-            } catch (error) { showMessage('join-team-error', getFriendlyErrorMessage(error), true); }
+            } catch (error) {
+                showMessage('join-team-error', getFriendlyErrorMessage(error), true);
+            }
         };
         document.getElementById('cancel-join-team-btn').onclick = closeJoinTeamModal;
     }
+    // === পরিবর্তন শেষ ===
+
     async function handleAddMoney() {
         hideMessage('add-money-error');
         const transactionId = document.getElementById('transaction-id').value.trim();
@@ -1255,7 +1435,8 @@
             showFlashMessage('withdraw-success', 'Withdrawal request submitted successfully.');
             document.getElementById('withdraw-form').reset();
         } catch (error) {
-            showFlashMessage('withdraw-error', error.message || getFriendlyErrorMessage(error), true);
+            showFlashMessage('withdraw-error', getFriendlyErrorMessage(error), true);
+            // Revert balance if it's not an insufficient balance error
             if (!error.message.includes("Insufficient balance")) { runTransaction(ref(db, `users/${currentUserId}/balance`), (currentBalance) => (currentBalance || 0) + amount); }
         }
     }
@@ -1271,12 +1452,17 @@
             allUsersSnap.forEach(userSnap => { const userData = userSnap.val(); if (userData.username && userData.username.toLowerCase() === recipientUsername.toLowerCase()) { recipientId = userSnap.key; } if(userSnap.key === currentUserId){ senderUsername = userData.username; } });
             if (!recipientId) throw new Error('Recipient user not found.');
             if (recipientId === currentUserId) throw new Error('You cannot transfer money to yourself.');
+            
+            // Run transactions
             await runTransaction(ref(db, `users/${currentUserId}/balance`), (balance) => { if ((balance || 0) < amount) throw new Error('Insufficient balance.'); return balance - amount; });
             await runTransaction(ref(db, `users/${recipientId}/balance`), (balance) => (balance || 0) + amount);
+            
+            // Log transfer
             await push(ref(db, 'transfers'), { senderId: currentUserId, senderUsername, recipientId, recipientUsername, amount, timestamp: Date.now() });
+            
             showFlashMessage('transfer-success', `Successfully transferred ${amount} BDT to ${recipientUsername}.`);
             document.getElementById('transfer-form').reset();
-        } catch (error) { showFlashMessage('transfer-error', error.message, true); }
+        } catch (error) { showFlashMessage('transfer-error', getFriendlyErrorMessage(error), true); }
     }
 
 
@@ -1320,7 +1506,6 @@
         document.getElementById('side-menu-overlay').addEventListener('click', closeSideMenu);
         document.querySelector('.close-menu-btn').addEventListener('click', closeSideMenu);
         
-        // Settings button in side menu (no functionality requested, visual only)
         document.querySelector('.side-menu-header .settings-btn').addEventListener('click', () => {
             console.log('Settings button clicked (no functionality yet)');
         });
@@ -1345,9 +1530,9 @@
             const file = event.target.files[0];
             if (!file || !currentUserId) return;
 
-            const MAX_FILE_SIZE_MB = 2; // Limit image size for localStorage
+            const MAX_FILE_SIZE_MB = 2;
             if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-                showFlashMessage('profile-info-success', `FFARENA Error: Image too large. Max ${MAX_FILE_SIZE_MB}MB for local storage.`, true);
+                showFlashMessage('profile-info-success', `FFARENA Error: Image too large. Max ${MAX_FILE_SIZE_MB}MB.`, true);
                 return;
             }
 
@@ -1359,11 +1544,7 @@
                     document.getElementById('profile-v2-pic').src = imageDataUrl;
                     showFlashMessage('profile-info-success', 'Profile picture updated!');
                 } catch (error) {
-                    if (error.code === DOMException.QUOTA_EXCEEDED_ERR || error.name === 'QuotaExceededError') {
-                        showFlashMessage('profile-info-success', 'FFARENA Error: Storage full. Could not save profile picture. Try clearing browser data or using a smaller image.', true);
-                    } else {
-                        showFlashMessage('profile-info-success', 'FFARENA Error: Failed to update profile picture. Try again.', true);
-                    }
+                    showFlashMessage('profile-info-success', 'FFARENA Error: Failed to save picture. Storage might be full.', true);
                     console.error("Error setting local storage:", error);
                 }
             };
@@ -1400,10 +1581,9 @@
 
         document.getElementById('details-modal-close-btn').addEventListener('click', closeDetailsModal);
         document.getElementById('player-list-modal-close-btn').addEventListener('click', closePlayerListModal);
-        document.getElementById('cancel-join-team-btn').addEventListener('click', closeJoinTeamModal);
         
         // Close modals on overlay click
-        ['details-modal-overlay', 'player-list-modal-overlay', 'join-team-modal-overlay'].forEach(id => {
+        ['details-modal-overlay', 'player-list-modal-overlay', 'join-team-modal-overlay', 'gamer-tag-modal-overlay'].forEach(id => {
              document.getElementById(id).addEventListener('click', (e) => { if(e.target.id === id) e.target.classList.remove('active'); });
         });
 

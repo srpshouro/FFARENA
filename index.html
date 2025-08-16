@@ -276,12 +276,12 @@
             position: absolute;
             bottom: 5px; right: 5px;
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: var(--primary-text);
             width: 35px; height: 35px;
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             cursor: pointer;
-            border: 2px solid var(--card-bg);
+            border: 2px solid #050814;
         }
         #profile-pic-upload { display: none; }
 
@@ -338,7 +338,7 @@
         }
         .profile-v2-stat .label { font-size: 0.9rem; color: var(--secondary-text); margin-bottom: 5px; }
         .profile-v2-stat .value { font-size: 1.5rem; font-weight: 600; color: var(--yellow-accent); }
-        #profile-v2-logout-btn { display: block; width: calc(100% - 30px); margin: 20px auto; background-color: var(--yellow-accent); color: var(--bg-color); font-size: 1.1rem; }
+        #profile-v2-logout-btn { display: block; width: calc(100% - 30px); margin: 20px auto; background-color: var(--yellow-accent); color: #050814; font-size: 1.1rem; }
         
         .support-card { background-color: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 25px; }
         .support-card h3 { font-size: 1.5rem; margin-bottom: 20px; text-align: center; color: var(--primary-text); }
@@ -445,34 +445,33 @@
 
         /* Payment Gateway Section Styles */
         #payment-gateway-section { padding-top: 20px; }
-        .pg-container { background-color: #ffffff; color: #1e1e1e; border-radius: 15px; padding: 25px; }
+        .pg-container { background-color: transparent; color: var(--primary-text); border-radius: 15px; padding: 25px; }
         .pg-header { text-align: center; margin-bottom: 25px; }
-        .pg-logo-wrapper { display: inline-block; padding: 15px; border-radius: 50%; background-color: #f0f0f0; margin-bottom: 10px; }
+        .pg-logo-wrapper { display: inline-block; padding: 15px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.1); margin-bottom: 10px; }
         .pg-logo-wrapper img { height: 40px; }
-        .pg-header h3 { font-size: 1.5rem; font-weight: 600; color: #1e1e1e; }
-        .pg-payment-options button { width: 100%; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background-color: #f9f9f9; margin-bottom: 12px; cursor: pointer; transition: background-color 0.2s; }
-        .pg-payment-options button:hover { background-color: #f0f0f0; }
-        .pg-payment-options img { height: 30px; margin-right: 15px; }
-        .pg-payment-options span { font-size: 1.1rem; font-weight: 500; }
-        .pg-pay-button { background-color: #007bff; color: #fff; border: none; width: 100%; padding: 14px; font-size: 1.2rem; border-radius: 8px; margin-top: 20px; font-weight: 700; }
+        .pg-header h3 { font-size: 1.5rem; font-weight: 600; color: var(--primary-text); }
+        .pg-payment-options button { width: 100%; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); margin-bottom: 12px; cursor: pointer; transition: background-color 0.2s; }
+        .pg-payment-options button:hover { background-color: var(--info-color); }
+        .pg-payment-options img { height: 30px; margin-right: 15px; border-radius: 5px;}
+        .pg-payment-options span { font-size: 1.1rem; font-weight: 500; color: var(--primary-text); }
+        .pg-pay-button { background-color: var(--premium-orange); color: #fff; border: none; width: 100%; padding: 14px; font-size: 1.2rem; border-radius: 8px; margin-top: 20px; font-weight: 700; }
 
-        .pg-instruction-page { display: none; position: relative; padding: 20px; background-color: #fce4ec; /* Light Pink for bKash */ border-radius: 8px; color: #333; }
-        .pg-instruction-page.nagad { background-color: #fde4e4; /* Light Red for Nagad */ }
+        .pg-instruction-page { display: none; position: relative; padding: 20px; background-color: transparent; border-radius: 8px; color: var(--secondary-text); }
         .pg-instruction-header { text-align: center; margin-bottom: 20px; }
-        .pg-instruction-header img { height: 50px; }
-        .pg-instruction-header h4 { font-size: 1.8rem; margin: 10px 0; color: #1e1e1e; }
+        .pg-instruction-header img { height: 50px; border-radius: 8px;}
+        .pg-instruction-header h4 { font-size: 1.8rem; margin: 10px 0; color: var(--primary-text); }
         .pg-instruction-list { list-style: none; padding: 0; }
         .pg-instruction-list li { margin-bottom: 15px; font-size: 1rem; display: flex; align-items: flex-start; line-height: 1.5; }
         .pg-instruction-list li::before { content: "•"; font-weight: bold; color: #d9277f; /* bKash pink */ margin-right: 10px; font-size: 1.5rem; line-height: 1; }
         .pg-instruction-page.nagad .pg-instruction-list li::before { color: #f54925; /* Nagad orange */ }
-        .pg-recipient-number { display: flex; justify-content: space-between; align-items: center; background-color: #fff; padding: 12px 15px; border-radius: 8px; margin: 8px 0; border: 1px solid #ddd; }
-        .pg-recipient-number span { font-weight: 700; font-size: 1.2rem; color: #1e1e1e; }
-        .pg-copy-btn { background: #e0e0e0; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #333; }
+        .pg-recipient-number { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg); padding: 12px 15px; border-radius: 8px; margin: 8px 0; border: 1px solid var(--border-color); }
+        .pg-recipient-number span { font-weight: 700; font-size: 1.2rem; color: var(--primary-text); }
+        .pg-copy-btn { background: var(--info-color); border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--primary-text); }
         .pg-verify-btn { width: 100%; background-color: #d9277f; color: white; padding: 14px; font-size: 1.1rem; border-radius: 8px; border: none; margin-top: 20px; font-weight: bold; }
         .pg-instruction-page.nagad .pg-verify-btn { background-color: #f54925; }
-        .pg-back-btn { font-size: 1.8rem; background: none; border: none; cursor: pointer; position: absolute; top: 15px; left: 15px; color: #333; padding: 5px; line-height: 1; }
-        #pg-bkash-trx-id, #pg-nagad-trx-id { background-color: rgba(0, 0, 0, 0.05); color: #1e1e1e; border-color: #ccc; }
-        #pg-bkash-trx-id::placeholder, #pg-nagad-trx-id::placeholder { color: #666; }
+        .pg-back-btn { font-size: 1.8rem; background: none; border: none; cursor: pointer; position: absolute; top: 15px; left: 15px; color: var(--primary-text); padding: 5px; line-height: 1; }
+        #pg-bkash-trx-id, #pg-nagad-trx-id { background-color: var(--input-bg); color: var(--primary-text); border-color: var(--border-color); }
+        #pg-bkash-trx-id::placeholder, #pg-nagad-trx-id::placeholder { color: var(--secondary-text); opacity: 0.7; }
         
     </style>
 </head>
@@ -1553,7 +1552,7 @@
     }
 
     // --- NEW ADD/WITHDRAW MONEY LOGIC ---
-    async function submitAddMoneyRequest(amount, transactionId) {
+    async function submitAddMoneyRequest(amount, transactionId, method) {
         if (!transactionId) {
             return showFlashMessage('add-money-error', 'Please provide a valid Transaction ID.', true);
         }
@@ -1574,6 +1573,7 @@
                 userId: currentUserId,
                 transactionId: transactionId,
                 amount: amount,
+                method: method,
                 status: 'Pending',
                 timestamp: Date.now()
             });
@@ -1955,22 +1955,24 @@
         document.getElementById('pg-verify-bkash').addEventListener('click', () => {
             const amount = parseFloat(pgPayBtn.dataset.amount);
             const trxId = document.getElementById('pg-bkash-trx-id').value.trim();
-            submitAddMoneyRequest(amount, trxId);
+            submitAddMoneyRequest(amount, trxId, 'bKash');
         });
 
         document.getElementById('pg-verify-nagad').addEventListener('click', () => {
             const amount = parseFloat(pgPayBtn.dataset.amount);
             const trxId = document.getElementById('pg-nagad-trx-id').value.trim();
-            submitAddMoneyRequest(amount, trxId);
+            submitAddMoneyRequest(amount, trxId, 'Nagad');
         });
 
         document.querySelectorAll('.pg-copy-btn').forEach(button => {
             button.addEventListener('click', () => {
                 const target = document.querySelector(button.dataset.clipboardTarget);
-                navigator.clipboard.writeText(target.innerText).then(() => {
-                    button.innerText = 'Copied!';
-                    setTimeout(() => { button.innerText = 'Copy'; }, 2000);
-                });
+                if (target) {
+                    navigator.clipboard.writeText(target.innerText).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    }).catch(err => console.error('Failed to copy: ', err));
+                }
             });
         });
 
